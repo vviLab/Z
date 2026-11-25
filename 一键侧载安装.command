@@ -46,12 +46,19 @@ preflight() {
     echo "     pip3 install mitmproxy"
     echo "     或 python3 -m venv venv && ./venv/bin/pip install mitmproxy"
     ok=1
-  elif ! "$md" --help 2>&1 | grep -q -- '--emudhra'; then
-    echo "[!!] mitmproxy 版本过低：缺 --emudhra（需要 12.3+）"
-    echo "     python3 -m pip install -U mitmproxy"
-    ok=1
   else
-    echo "[ok] mitmdump: $("$md" --version 2>&1 | head -1)"
+    # 不能写成 "$md" --help | grep -q：--help 的退出码是 1，配合 set -o pipefail 会误判成版本过低
+    md_help=$("$md" --help 2>&1 || true)
+    case $md_help in
+      *--emudhra*)
+        echo "[ok] mitmdump: $("$md" --version 2>&1 | head -1)"
+        ;;
+      *)
+        echo "[!!] mitmproxy 版本过低：缺 --emudhra（需要 12.3+）"
+        echo "     python3 -m pip install -U mitmproxy"
+        ok=1
+        ;;
+    esac
   fi
   # 共享接口（不需要 root，bridge 通常有读权限）
   local ifc=""

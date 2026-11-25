@@ -242,10 +242,19 @@ if [ ! -x "$MITMDUMP" ]; then
   exit 12
 fi
 # --emudhra 从 mitmproxy 12.3 起提供；低版本会在握手阶段失败，提前拦下
-if ! "$MITMDUMP" --help 2>&1 | grep -q -- '--emudhra'; then
-  printf 'E13 当前 mitmdump 不支持 --emudhra（低于 12.3），请升级 mitmproxy\n' >&2
-  exit 13
-fi
+#
+# 注意：这里不能用 `"$MITMDUMP" --help | grep -q`。mitmdump --help 的退出码本身就是 1
+# （typer/argparse 的惯例），而本脚本开了 set -o pipefail，管道会取到那个 1，
+# 于是无论有没有 --emudhra 都会误报 E13。改成先落文件、再单独 grep，
+# 让判断只取决于 grep 的结果。
+MITM_HELP=$("$MITMDUMP" --help 2>&1 || true)
+case $MITM_HELP in
+  *--emudhra*) : ;;
+  *)
+    printf 'E13 当前 mitmdump 不支持 --emudhra（低于 12.3），请升级 mitmproxy\n' >&2
+    exit 13
+    ;;
+esac
 [ -f "$ADDON" ] || die "找不到 addon：$ADDON"
 
 mkdir -p "$OUT" "$BASE/mitm-config"
