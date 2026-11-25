@@ -222,16 +222,26 @@ macOS 版已去掉了固定设备参数：
 
 检测不到车机时，pf 规则会退化为「整个热点网段」作为源，仍然只作用于热点侧、不碰上游。
 
-## 6.5 Windows 版
+## 6.5 连续侧载多个 APK
 
-`windows/` 目录是自包含的 Windows 版本（beta）：
+v1.1.0 起支持在一次会话里连续侧载多个 APK，机制上仍是「一轮一进程」：
 
-- 用 **WinDivert**（pydivert）把发往 443 的包改写到本机，回程再把源地址改回去；
-- 本地 **SNI 分流器**读出域名，用 HTTP CONNECT 交给 mitmproxy（Windows 没有 pf，mitmproxy 的透明模式不可用）；
-- 注入 / 替换逻辑与 macOS 版共用同一个 addon；
-- 依赖：Python 3.10+、`pip install mitmproxy pydivert`、管理员权限。
+```text
+zeekr-sideload.sh（循环）
+   └─ 每轮：算 sha256/md5/大小 → bash transparent-test.sh --inject-update PKG --replace-apk APK
+        └─ transparent-test.sh（自洽单元）：加载 anchor → 启 mitmdump → wait → trap 卸载 anchor + 停代理
+```
 
-详见 `windows/README.md`。
+每轮都是一次完整的引擎调用，因此：
+
+| 关注点 | 结论 |
+|---|---|
+| 上一轮残留状态 | 不存在。mitmdump 每轮新起，`_armed_paths`、`_override_seen_at` 随进程结束清空 |
+| pf anchor | 每轮 `pfctl -a "$ANCHOR" -F all` 卸载后重新加载，主规则集不受影响 |
+| 空窗 | 约 3–5 秒（卸载 → 重载 → mitmdump 就绪），期间车机断网 |
+| 批量输入 | `--apk a.apk b.apk c.apk`，或在每轮结束提示处拖入路径 |
+
+> 上一版 Windows 实现（WinDivert + 本地 SNI 分流）已于 v1.1.0 移除，历史代码见 v1.0.1 标签下 `windows/`。
 
 ## 7. 成功 / 失败判读
 

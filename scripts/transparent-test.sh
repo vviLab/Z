@@ -224,7 +224,10 @@ fi
 # ---- 自动探测 ----
 if [ -z "$IFACE" ]; then
   IFACE=$(detect_iface)
-  [ -n "$IFACE" ] || die "找不到正在共享的 bridge 接口；请确认已开启互联网共享，或用 ZEEKR_IFACE 指定"
+  if [ -z "$IFACE" ]; then
+    printf 'E10 找不到正在共享的 bridge 接口；请确认已开启互联网共享，或用 ZEEKR_IFACE 指定\n' >&2
+    exit 10
+  fi
 fi
 PREFIX=$(iface_prefix "$IFACE")
 if [ -z "$CAR_IP" ] && [ "$CHECK_ONLY" = 0 -o "$CHECK_ONLY" = 1 ]; then
@@ -234,7 +237,15 @@ if [ -z "$CAR_MAC" ] && [ -n "$CAR_IP" ]; then
   CAR_MAC=$(detect_lease "$PREFIX" mac | head -1)
 fi
 
-[ -x "$MITMDUMP" ] || die "找不到可执行的 mitmdump：${MITMDUMP}（可用 ZEEKR_VENV 覆盖）"
+if [ ! -x "$MITMDUMP" ]; then
+  printf 'E12 找不到可执行的 mitmdump（可用 ZEEKR_VENV 指定）\n' >&2
+  exit 12
+fi
+# --emudhra 从 mitmproxy 12.3 起提供；低版本会在握手阶段失败，提前拦下
+if ! "$MITMDUMP" --help 2>&1 | grep -q -- '--emudhra'; then
+  printf 'E13 当前 mitmdump 不支持 --emudhra（低于 12.3），请升级 mitmproxy\n' >&2
+  exit 13
+fi
 [ -f "$ADDON" ] || die "找不到 addon：$ADDON"
 
 mkdir -p "$OUT" "$BASE/mitm-config"
@@ -244,7 +255,11 @@ say "== 环境预检 =="
 say "接口：$IFACE    车机：$CAR_IP ($CAR_MAC)    监听：$LISTEN_IP:$PORT"
 
 IFACE_ADDR=$(ifconfig "$IFACE" 2>/dev/null | awk '/inet /{print $2; exit}')
-[ -n "$IFACE_ADDR" ] || die "接口 $IFACE 没有 IPv4 地址；请确认系统互联网共享已开启"
+if [ -z "$IFACE_ADDR" ]; then
+  # 结构化退出码 10：车机连不上 → 入口脚本据此提示修复并回到「下一个」提示
+  printf 'E10 接口 %s 没有 IPv4 地址；请确认系统互联网共享已开启\n' "$IFACE" >&2
+  exit 10
+fi
 say "[ok] $IFACE = $IFACE_ADDR"
 say "[ok] mitmdump: $MITMDUMP"
 
@@ -262,7 +277,8 @@ fi
 
 PORT_HOLDER=$(lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | awk 'NR==2{print $1" pid="$2}')
 if [ -n "$PORT_HOLDER" ]; then
-  die "端口 $PORT 已被占用：$PORT_HOLDER"
+  printf 'E11 端口 %s 已被占用：%s\n' "$PORT" "$PORT_HOLDER" >&2
+  exit 11
 fi
 
 if [ "$CHECK_ONLY" = 1 ] && [ "$(id -u)" != 0 ]; then

@@ -18,7 +18,7 @@
 
 原理是让车机自己的应用商店把它当成一次「应用更新」安装下去：透明解密商店流量 → 注入一条假更新 → 把下载内容换掉。全程不修改车机系统、不往车机装证书，退出即恢复。
 
-> 当前版本：**v1.0.1**（2026-10-31）· macOS 版已在极氪 7X 实测成功（DiPlay、ES 文件浏览器、MT管理器）；**Windows 版也已实测可用**
+> 当前版本：**v1.1.0**（2026-11-25）· macOS 版已在极氪 7X 实测成功（DiPlay、ES 文件浏览器、MT管理器）；支持一次会话连续侧载多个 APK。**Windows 版已于 v1.1.0 移除**（见文末[版本](#版本)）
 > 技术原理与安全分析见 [docs/技术路径-车机APK侧载.md](docs/技术路径-车机APK侧载.md)
 > 本项目是 **AI 辅助编程项目**：需求、方案与实测由作者主导，代码与文档在 AI 协助下完成，可能存在未知缺陷，请自行审阅与评估。
 
@@ -32,7 +32,7 @@
 - [原理](#原理)
 - [两个漏洞的组合](#两个漏洞的组合)
 - [快速开始（macOS）](#快速开始macos)
-- [Windows](#windows)
+- [连续侧载多个 APK](#连续侧载多个-apk)
 - [结果判读](#结果判读)
 - [常见问题](#常见问题)
 - [让 AI 帮你配置](#让-ai-帮你配置)
@@ -46,11 +46,10 @@
 
 | 平台 | 发布包 | 解压后 |
 |---|---|---|
-| Windows 10 / 11 x64 | `ZEELoad-Windows-x64.zip`（约 30 MB，**解压即用**） | 双击 `ZEELoad\ZEELoad.exe`（会弹 UAC），图形界面里选 APK → 点「开始」 |
-| macOS 13+ | `ZEELoad-macOS.zip`（约 0.4 MB） | 先装 mitmproxy（见下），再双击 `ZEELoad\一键侧载安装.command`，把 APK 拖上去 |
+| macOS 13+ | `ZEELoad-macOS.zip`（约 0.4 MB） | 先装 mitmproxy（见下），再双击 `ZEELoad/一键侧载安装.command`，把 APK 拖上去 |
 
-> ⚠️ Windows 包必须**整个 `ZEELoad` 文件夹一起解压使用**。只把 `ZEELoad.exe` 拖出来会报
-> `Failed to load Python DLL ... _internal\python312.dll`——程序依赖同目录的 `_internal\`。
+> ℹ️ **Windows 版已移除**（v1.1.0 起）。`ZEELoad-Windows-x64.zip` 与本仓库 `windows/` 目录都不再提供，
+> 历史版本可从 Git 历史（v1.0.1 标签）取回。工具现在只支持 macOS。
 >
 > 🍎 macOS 包是脚本集合（已带 Unix 权限、LF 换行），**不含 mitmproxy**：
 > `pip3 install mitmproxy`（或 `python3 -m venv venv && ./venv/bin/pip install mitmproxy`，脚本会自动识别包内 `venv/`）。
@@ -63,9 +62,9 @@
 | 项目 | 要求 |
 |---|---|
 | 车机 | Android 车机，且系统 **仍信任 emSign 根证书**（国内车机大多没有 GMS，未收到封禁列表；2026-10-22 之后更新过信任库的车机可能失效） |
-| 电脑 | macOS（已验证）或 Windows 10/11 x64（已验证） |
+| 电脑 | macOS 13+（已验证） |
 | 网络 | 电脑给车机开热点/互联网共享，车机连上后能上网 |
-| 权限 | 电脑需要一次管理员权限（配置 pf / 加载 WinDivert 驱动） |
+| 权限 | 电脑需要一次管理员权限（配置 pf 转发） |
 | 车机侧 | 无需任何设置、无需装证书、无需开未知来源 |
 
 **只用于你自己的车辆。** 详见[安全与合规](#安全与合规)。
@@ -76,26 +75,22 @@
 |---|---|---|---|
 | Python | **3.12** | 3.12.7 | mitmproxy 12.3+ 的硬性要求；3.10 / 3.11 装不到支持 `--emudhra` 的版本 |
 | mitmproxy | **12.3** | 12.3.1 | `--emudhra` 从 12.3 起提供 |
-| pydivert（仅 Windows） | 3.1+ | 3.1.3 | WinDivert 的 Python 绑定，自带驱动；版本由 mitmproxy 12.3 的约束解析（它锁 `pydivert<=3.1.3`） |
 | pip | 任意较新版本 | 24.x | `python -m pip install -U pip` |
 | macOS | 13+ | 15.6.1（arm64） | 依赖系统自带的 `pf`、互联网共享 |
-| Windows | 10 / 11 x64 | 10 21H2（19044）实测通过 | 需要管理员权限 + 移动热点（ICS） |
 
 检查命令：
 
 ```bash
 python3 --version
 mitmdump --version            # 需要 Mitmproxy 12.3+
-python3 -m pip show mitmproxy pydivert | grep -E "^(Name|Version)"
+python3 -m pip show mitmproxy | grep -E "^(Name|Version)"
 ```
-
-> Windows 上如果默认 `python` 是 3.10/3.11，请显式用 `py -3.12`；工具检测到低版本时会自动尝试 `py -3.12` 重新运行。
 
 ## 原理
 
 ```text
 车机 ──> 电脑热点
-          ├─ 透明转发：车机到 *.zeekrlife.com 的 443 全部转到本机（macOS: pf，Windows: WinDivert）
+          ├─ 透明转发：车机到 *.zeekrlife.com 的 443 全部转到本机（pf 独立 anchor）
           ├─ 解密：mitmproxy --emudhra，车机信任这条链，所以能解开 TLS
           ├─ 注入：商店「检查更新」时，把已安装应用的版本改成更高、哈希/大小指向目标 APK
           └─ 替换：商店真正下载时，把响应体换成目标 APK（按 Range 正确切分）
@@ -194,29 +189,43 @@ bash scripts/check-environment.sh
 
 可用环境变量覆盖自动探测：`ZEEKR_IFACE`、`ZEEKR_CAR_IP`、`ZEEKR_CAR_MAC`、`ZEEKR_VENV`、`ZEEKR_DOMAINS`、`ZEEKR_HOSTS`。
 
-## Windows
+## 连续侧载多个 APK
 
-`windows/` 是自包含版本，用 **WinDivert** 代替 pf，用本地 **SNI 分流器**把流量喂给 mitmproxy（Windows 没有 pf，mitmproxy 透明模式不可用）。
+v1.1.0 起，一次会话里可以连续装多个 APK，不用重开脚本、不用重新输管理员密码（macOS 的 sudo 通常缓存 5 分钟）。
 
-### 用发布包（推荐）
+### 一次拖多个（批量）
 
-解压 `ZEELoad-Windows-x64.zip` → 双击 `ZEELoad\ZEELoad.exe`（弹 UAC 点「是」）→ 选 APK → 点「开始」。界面里还有「放行防火墙」「抓包诊断」「诊断」几个按钮，排障时很有用。
+把多个 APK 一起拖到 `一键侧载安装.command` 上，或在命令行一次性给出：
 
-### 从源码运行
-
-```powershell
-cd windows
-python -m pip install -U mitmproxy pydivert
-
-# 以管理员身份运行
-python win_sideload.py --apk "C:\path\app.apk"
+```bash
+sudo bash scripts/zeekr-sideload.sh --apk a.apk b.apk c.apk
 ```
 
-或直接双击 `windows\一键侧载-Windows.bat` 并拖入 APK（会自动申请管理员权限）。
+脚本按给出的顺序逐个跑：每个 APK 都是一轮完整的「加载 pf → 启动 mitmdump → 注入 + 替换 → 卸载规则」。
+每一轮终端都会重新打印该 APK 的大小、sha256、md5，并等你在车机上点更新；**Ctrl-C 只结束当前这一轮**，不影响后面的排队。
 
-常用参数：`--proxy-only`（只起 HTTP 代理，不需要管理员）、`--hotspot-ip`（手动指定热点网卡）、`--sniff 30`（抓包诊断）、`--emudhra-old`（老信任库车机）。
+### 一轮结束后换下一个
 
-详细说明、排错与限制见 [windows/README.md](windows/README.md)。
+每轮结束（Ctrl-C 或出错）都会回到提示：
+
+```text
+回车直接继续下一个；输入 APK 路径（可空格隔开多个，可带引号）继续；
+输入 n 回车结束。
+下一个:
+```
+
+- 直接把下一个 APK 从 Finder 拖进终端窗口（会自动带上路径）；
+- 或手工输入路径，多个路径用空格分隔；
+- 直接回车 = 按队列继续（没有队列就直接退出）；
+- 输入 `n` = 退出脚本。
+
+输入不是 APK（或不是 zip）时只给警告，不会中断整个会话。
+
+### 注意事项
+
+- 每轮都会卸载并重新加载 pf anchor、重启 mitmdump，**空窗约 3–5 秒**，期间车机断网；等车机确认上一个装好了再继续。
+- 每轮的日志都单独落在 `logs/<时间戳>/` 下，装了 5 个就是 5 个目录，不要被目录数量误导。
+- 装的是**新包**：下一个 APK 的包名必须和车机上已装应用不同，否则安装器会报「包名冲突」。
 
 ## 结果判读
 
@@ -247,14 +256,14 @@ python win_sideload.py --apk "C:\path\app.apk"
 **Q：macOS 提示找不到 mitmdump？**
 按[快速开始](#快速开始macos)装好；或在包内建 `venv/`，脚本会自动用它。
 
-**Q：Windows 上 443 被循环劫持？**
-已处理：WinDivert 过滤器只匹配热点网段（`x.x.x.2–254`），不会把本机 mitmproxy 的上游连接也劫持。若你改了热点网段，请同步改 `windows/win_sideload.py` 里的判断。
+**Q：装完一个想接着装第二个，要重新开脚本吗？**
+不用。脚本会在每轮结束时提示输入下一个 APK（也可以直接回车按队列继续），详见[连续侧载多个 APK](#连续侧载多个-apk)。
 
-**Q：Windows 发布包需要装 Python 吗？**
-不需要。`ZEELoad-Windows-x64.zip` 里已经内置 Python 3.12、mitmproxy、WinDivert 驱动，解压双击即可。只有从源码运行才需要 Python 3.12+。
+**Q：Ctrl-C 会不会把整个批量任务停掉？**
+不会。Ctrl-C 只结束当前这一轮（卸载 pf、停 mitmdump），随后回到「下一个」提示，队列里剩下的还在。
 
-**Q：Windows 版双击没反应 / 一闪而过？**
-按顺序检查：① 是不是只把 `ZEELoad.exe` 拖出来了（必须整个 `ZEELoad` 文件夹一起解压）；② UAC 弹窗有没有点「是」（透明模式要管理员）；③ 看 `ZEELoad\logs\gui-run-*.log`，或点界面里的「诊断」。
+**Q：Windows 版还能用吗？**
+不能，v1.1.0 起已移除。需要 Windows 版请回到 v1.0.1 标签下的 `windows/` 目录（`git checkout v1.0.1 -- windows`），但该版本不再维护。
 
 ## 让 AI 帮你配置
 
@@ -263,11 +272,10 @@ python win_sideload.py --apk "C:\path\app.apk"
 ## 已知限制
 
 - **只能装新包**，不能替换已安装应用；
-- **仅 IPv4 透明转发**（CDN 有 AAAA，macOS 版会用 `block return` 把目标域名的 IPv6 挡掉、逼回 IPv4；Windows 版依赖 ICS 不给客户端 IPv6）；
+- **仅 IPv4 透明转发**（CDN 有 AAAA，脚本会用 `block return` 把目标域名的 IPv6 挡掉、逼回 IPv4）；
 - 全量解密（`--intercept-all`）可能让个别做了证书固定的车机应用暂时异常，退出脚本即恢复；
 - 商店「检查更新」有缓存，必须靠**详情页**触发新元数据；
 - 车机 OTA / 商店更新后，信任库或校验逻辑可能变化，需要重新验证；
-- **Windows 版**：必须用管理员运行（WinDivert 加载内核驱动），且依赖「移动热点」的 ICS 转发；车机如果自动切回蜂窝网络、或商店只走 QUIC，会拦截不到（工具会丢弃 QUIC 逼它回退 TCP，日志里有提示）。
 
 ## 安全与合规
 
@@ -289,13 +297,12 @@ zeeload/
 ├── 停止并恢复.command            兜底：卸载规则、停代理
 ├── 检查环境.command              只读诊断
 ├── scripts/
-│   ├── zeekr-sideload.sh         侧载入口（算哈希、调引擎）
+│   ├── zeekr-sideload.sh         侧载入口（算哈希、调引擎，支持多轮排队）
 │   ├── transparent-test.sh       引擎：pf 转发 + mitmdump 生命周期（自动探测接口/车机）
 │   ├── stop-transparent.sh       卸载规则
 │   ├── check-environment.sh      环境自检
 │   └── inspect-pf.sh             只读导出 pf 规则（排障用）
 ├── addons/zeekr_log.py           mitmproxy 插件（注入 / 替换 / 记录）
-├── windows/                      Windows 版（WinDivert + SNI 分流 + 图形界面）
 ├── assets/                       Logo 与宣传图（svg / png / icns / ico）
 ├── docs/
 │   └── 技术路径-车机APK侧载.md    原理、漏洞分析、证据、接口字段
@@ -308,7 +315,15 @@ zeeload/
 
 ## 版本
 
-### v1.0.1（2026-10-31）
+### v1.1.0（2026-11-25）
+
+- **连续侧载多个 APK**：`一键侧载安装.command` 支持一次拖入多个 APK；每轮结束回车/输入路径即可换下一个，`n` 退出
+- `scripts/zeekr-sideload.sh` 从「跑一次」改为循环：批量参数、路径解析（去引号/转义、相对路径兜底）、逐轮算哈希与校验 zip
+- **移除 Windows 实现**：`windows/` 目录（WinDivert + SNI 分流 + PyInstaller 图形界面，约 2 900 行）整体删除，`ZEELoad-Windows-x64.zip` 不再发布
+  - 历史代码仍可从 v1.0.1 标签取回：`git checkout v1.0.1 -- windows`
+  - 仅在 macOS 上维护；注入/替换插件 `addons/zeekr_log.py` 未改动
+
+### v1.0.1（2026-10-31）· Windows 版已于 v1.1.0 移除
 
 Windows 版从 beta 转为可用，并补上图形界面：
 
@@ -325,7 +340,7 @@ Windows 版从 beta 转为可用，并补上图形界面：
 首个版本，项目命名 **极载 · ZEEload**。
 
 - **macOS**：一键侧载（拖入 APK），pf 透明转发 + mitmproxy `--emudhra` 解密
-- **Windows（beta）**：WinDivert 重定向 + 本地 SNI 分流，共用同一套注入/替换逻辑
+- **Windows（beta，v1.1.0 已移除）**：WinDivert 重定向 + 本地 SNI 分流，共用同一套注入/替换逻辑
   - 启动脚本自动提权、纯 ASCII 输出；自动定位 `mitmdump.exe`（`Scripts\` / `%APPDATA%` / PATH / 内联）
   - 要求并自动切换到 Python 3.12+，启动时校验 mitmproxy ≥ 12.3
   - WinDivert 按方向过滤（只改写 INBOUND 车机包与分流器 OUTBOUND 回程包）
