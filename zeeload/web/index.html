@@ -3,616 +3,1425 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!--ZEELOAD_TOKEN-->
 <title>ZEEload · 极载</title>
 <style>
-:root{
-  --bg:#0B0B0D; --panel:#131215; --field:#0F0E11; --log:#08080A;
-  --gold:#C79A3F; --gl:#F6DFA6; --gp:#FFF7E6; --gd:#8B7A56;
-  --tx:#D8C9A6; --mu:#6B6252; --bd:#3B301C; --bd2:#251F14;
-  --ok:#8FD1A0; --warn:#E2B457; --err:#E07A6B;
-  --radius:10px;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;background:var(--bg);color:var(--tx);
-  font-family:"PingFang SC","Helvetica Neue",-apple-system,system-ui,"Segoe UI",sans-serif;
-  font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;
-}
-.mono{font-family:Menlo,"SF Mono",ui-monospace,monospace}
-.wrap{max-width:980px;margin:0 auto;padding:22px 22px 26px;display:flex;flex-direction:column;min-height:100vh}
+  :root, :root[data-theme="light"] {
+    color-scheme: light;
+    --background: #ffffff;
+    --surface-container-low: #f7f6f2;
+    --surface-container: #f1efe9;
+    --surface-container-high: #e5e1d8;
+    --on-surface: #161616;
+    --on-surface-variant: #4f4b43;
+    --outline: #857e71;
+    --outline-variant: #dcd7cc;
+    --primary: #825400;
+    --on-primary: #ffffff;
+    --primary-container: #ffefd1;
+    --on-primary-container: #3b2400;
+    --data-1: #825400;
+    --data-2: #005d5d;
+    --data-3: #0f62fe;
+    --data-4: #9f1853;
+    --data-context: #767065;
+    --positive: #198038;
+    --positive-bg: #defbe6;
+    --warning: #8e6a00;
+    --warning-bg: #fcf4d6;
+    --error: #da1e28;
+    --error-bg: #fff1f1;
+    --focus: #825400;
+    --log-bg: #f7f6f2;
+    --log-cmd: #5c5446;
+    --cur-row-bg: #fff8eb;
+    --shadow-1: 0 2px 6px rgb(0 0 0 / 0.08);
+    --shadow-2: 0 4px 12px rgb(0 0 0 / 0.12);
+    --rule: 1px solid var(--outline-variant);
+    --field-rule: 1px solid var(--outline);
+    --indicator: 2px solid var(--primary);
+    --rounded-full: 0.75rem;
+    --font-headline: 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-body: 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-label: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, 'Cascadia Mono', Consolas, monospace;
+    --headline-size: clamp(1.35rem, 1.15rem + 0.8vw, 1.75rem);
+    --subhead-size: clamp(1.0625rem, 1rem + 0.3vw, 1.2rem);
+    --body-size: clamp(0.9375rem, 0.9rem + 0.15vw, 1rem);
+    --label-size: 0.75rem;
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2.5rem;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --dur-micro: 120ms;
+    --dur-short: 220ms;
+    --dur-long: 420ms;
+  }
 
-/* ---------- 品牌 ---------- */
-header{display:flex;align-items:center;gap:16px}
-.logo{width:56px;height:56px;flex:none;border-radius:14px;background:#0E0D10;border:1px solid var(--bd);
-  display:grid;place-items:center;overflow:hidden}
-.logo img{width:100%;height:100%;object-fit:contain;display:block}
-.brand{flex:1;min-width:0}
-.brand h1{margin:0;font-size:20px;font-weight:800;color:var(--gp);letter-spacing:.3px}
-.brand h1 span{color:var(--gl);margin-left:9px;font-weight:700}
-.brand p{margin:3px 0 0;font-size:11px;color:var(--gd)}
-.badge{font-family:Menlo,monospace;font-size:9px;letter-spacing:1.2px;color:var(--gl);
-  border:1px solid var(--bd);border-radius:4px;padding:5px 10px;background:var(--panel)}
-hr.rule{border:0;height:2px;background:var(--gold);margin:15px 0 0}
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --background: #141416;
+    --surface-container-low: #1b1a1e;
+    --surface-container: #232227;
+    --surface-container-high: #343239;
+    --on-surface: #f4f2ed;
+    --on-surface-variant: #c9c3b8;
+    --outline: #7a7365;
+    --outline-variant: #38342c;
+    --primary: #e9ce93;
+    --on-primary: #1a1305;
+    --primary-container: #3b2f16;
+    --on-primary-container: #f6dfa6;
+    --data-1: #e9ce93;
+    --data-2: #3ddbd9;
+    --data-3: #78a9ff;
+    --data-4: #ff7eb6;
+    --data-context: #968f82;
+    --positive: #42be65;
+    --positive-bg: #0e2b1a;
+    --warning: #f1c21b;
+    --warning-bg: #2b2109;
+    --error: #ff8389;
+    --error-bg: #2d0b10;
+    --focus: #e9ce93;
+    --log-bg: #0e0e10;
+    --log-cmd: #b5ab96;
+    --cur-row-bg: #2b2519;
+    --shadow-1: 0 2px 6px rgb(0 0 0 / 0.5);
+    --shadow-2: 0 4px 12px rgb(0 0 0 / 0.6);
+  }
 
-/* ---------- 向导步进条 ---------- */
-.wiz{display:flex;align-items:center;margin:16px 0 18px;gap:0}
-.wstep{flex:1;min-width:0;position:relative;text-align:center;cursor:pointer}
-.wstep:hover .lb{color:var(--tx)}
-.wstep .dot{width:26px;height:26px;margin:0 auto;border-radius:50%;border:1px solid var(--bd);
-  background:var(--field);display:grid;place-items:center;font-size:11px;color:var(--mu);position:relative;z-index:2;
-  transition:.15s}
-.wstep .lb{font-size:10.5px;color:var(--mu);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wstep::before{content:"";position:absolute;top:13px;left:0;right:50%;height:1px;background:var(--bd2)}
-.wstep::after{content:"";position:absolute;top:13px;left:50%;right:0;height:1px;background:var(--bd2)}
-.wstep:first-child::before,.wstep:last-child::after{display:none}
-.wstep.done .dot{border-color:var(--gold);background:var(--gold);color:#1A1206;font-weight:700}
-.wstep.done .lb{color:var(--gd)}
-.wstep.done::before,.wstep.done::after{background:var(--gold)}
-.wstep.cur .dot{border-color:var(--gl);background:var(--panel);color:var(--gl);
-  box-shadow:0 0 0 3px rgba(199,154,63,.18);font-weight:700}
-.wstep.cur .lb{color:var(--gl);font-weight:700}
-.wstep.err .dot{border-color:var(--err);background:var(--err);color:#2A0F0B}
-.wstep.err .lb{color:var(--err)}
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    overflow-x: clip;
+    margin: 0;
+    min-height: 100%;
+    background: var(--background);
+    color: var(--on-surface);
+    font-family: var(--font-body);
+    font-size: var(--body-size);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  [hidden] { display: none !important; }
 
-/* ---------- 卡片 ---------- */
-.card{border:1px solid var(--bd);border-radius:var(--radius);background:var(--panel);
-  padding:15px 17px 16px;margin-bottom:13px}
-.card.soft{border-color:var(--bd2);background:#111014}
-.card h2{margin:0 0 12px;font-size:12.5px;font-weight:700;color:var(--gl);letter-spacing:.3px;
-  display:flex;align-items:center;gap:9px}
-.card h2 b{width:18px;height:18px;flex:none;border-radius:50%;background:var(--field);border:1px solid var(--bd);
-  color:var(--gd);font-size:10px;display:grid;place-items:center;font-weight:700}
-.card h2 .r{margin-left:auto;font-size:10.5px;font-weight:400;color:var(--mu)}
-.card h2 .r.ok{color:var(--ok)} .card h2 .r.warn{color:var(--warn)} .card h2 .r.err{color:var(--err)}
+  .mono { font-family: var(--font-label); }
+  .page-grid {
+    max-width: 1020px;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 3.5rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .page-grid > * { min-width: 0; }
 
-.row{display:flex;align-items:center;gap:9px;margin-bottom:10px}
-.row:last-child{margin-bottom:0}
-.row>label{width:74px;flex:none;font-size:11.5px;color:var(--tx)}
-.field{flex:1;min-width:0;background:var(--field);border:1px solid var(--bd);border-radius:5px;
-  padding:9px 11px;font-size:12px;color:var(--tx);font-family:inherit;width:100%}
-.field:focus{outline:none;border-color:var(--gd);box-shadow:0 0 0 1px rgba(199,154,63,.18)}
-.field.small{flex:none;width:150px}
-.field::placeholder{color:#4A4437}
-textarea.field{resize:vertical;min-height:64px;line-height:1.6}
-.hint{font-size:10.5px;color:var(--gd);margin-top:9px;min-height:15px;word-break:break-all}
-.hint.err{color:var(--err)}
-.note{font-size:10.5px;color:var(--mu)}
-.note.gd{color:var(--gd)}
+  /* ---------- 报头与三态调光 ---------- */
+  .masthead {
+    border-top: 4px solid var(--primary);
+    border-bottom: var(--rule);
+    padding: 1.1rem 0 1rem;
+  }
+  .mast-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .logo-box {
+    width: 48px;
+    height: 48px;
+    flex: none;
+    background: var(--surface-container);
+    border: var(--rule);
+    display: grid;
+    place-items: center;
+  }
+  .logo-box svg { width: 36px; height: 36px; display: block; }
+  .brand { flex: 1; min-width: 200px; }
+  .brand h1 {
+    margin: 0;
+    font-family: var(--font-headline);
+    font-size: var(--headline-size);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+  }
+  .brand h1 span {
+    color: var(--primary);
+    font-weight: 600;
+    margin-left: 0.45rem;
+  }
+  .brand p {
+    margin: 0.2rem 0 0;
+    font-size: 0.875rem;
+    color: var(--on-surface-variant);
+  }
+  .theme-bar {
+    display: inline-flex;
+    align-items: center;
+    border: var(--rule);
+    background: var(--surface-container-low);
+  }
+  .theme-btn {
+    min-height: 34px;
+    padding: 0 0.75rem;
+    border: 0;
+    border-right: var(--rule);
+    border-radius: 0;
+    background: transparent;
+    color: var(--on-surface-variant);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: background var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+  }
+  .theme-btn:last-child { border-right: 0; }
+  .theme-btn:hover { background: var(--surface-container); color: var(--on-surface); }
+  .theme-btn[aria-pressed="true"] {
+    background: var(--primary);
+    color: var(--on-primary);
+    font-weight: 600;
+  }
 
-/* ---------- 任务清单 ---------- */
-.qhead{display:flex;align-items:center;gap:10px;margin:16px 0 8px}
-.qhead .spacer{flex:1}
-.qhead .qt{font-size:11.5px;color:var(--tx);font-weight:600;display:flex;align-items:center;gap:7px}
-.qcount{font-family:Menlo,monospace;font-size:10px;color:var(--gd);border:1px solid var(--bd);
-  border-radius:9px;padding:1px 8px;background:var(--field)}
-.qlist{border:1px solid var(--bd2);border-radius:7px;background:#0F0E11;overflow:hidden}
-.qlist .empty{padding:14px 13px;font-size:11px;color:var(--mu);text-align:center}
-.qitem{display:flex;align-items:center;gap:10px;padding:9px 11px;border-bottom:1px solid var(--bd2);
-  font-size:11.5px;transition:.1s;cursor:default}
-.qitem:last-child{border-bottom:0}
-.qitem:hover{background:#14131A}
-.qitem.cur{background:rgba(199,154,63,.07)}
-.qitem.cur .qname{color:var(--gl);font-weight:600}
-.qitem.drag{opacity:.45}
-.qitem.over{box-shadow:inset 0 2px 0 var(--gold)}
-.qitem .grip{color:var(--gd);font-size:14px;cursor:grab;flex:none;letter-spacing:-2px}
-.qitem .grip:active{cursor:grabbing}
-.qitem .idx{width:20px;flex:none;font-family:Menlo,monospace;font-size:10px;color:var(--mu);text-align:right}
-.qitem .qname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-family:Menlo,monospace;font-size:11px;color:var(--tx)}
-.qitem .qmeta{flex:none;font-size:10px;color:var(--mu);font-family:Menlo,monospace}
-.qitem .tag{flex:none;font-size:9px;padding:1px 7px;border-radius:8px;border:1px solid var(--bd);color:var(--gd)}
-.qitem .x{border:0;background:none;color:var(--mu);padding:0 4px;font-size:14px;line-height:1;cursor:pointer}
-.qitem .x:hover{color:var(--err);background:none;border:0}
+  /* ---------- 实时状态元信息条 ---------- */
+  .meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    padding: 0.65rem 0;
+    border-bottom: var(--rule);
+    font-family: var(--font-label);
+    font-size: 0.8125rem;
+    color: var(--on-surface-variant);
+  }
+  .meta-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .meta-item b { color: var(--on-surface); font-weight: 600; }
+  .meta-item.ok b { color: var(--positive); }
+  .meta-item.warn b { color: var(--warning); }
+  .meta-item.err b { color: var(--error); }
 
-/* ---------- 按钮 ---------- */
-button{font-family:inherit;font-size:12px;padding:9px 16px;border-radius:5px;cursor:pointer;
-  background:var(--field);color:var(--tx);border:1px solid var(--bd);transition:.12s;white-space:nowrap}
-button:hover:not(:disabled){border-color:var(--gd);color:var(--gp)}
-button:disabled{opacity:.35;cursor:not-allowed}
-button.primary{background:var(--gold);border-color:var(--gold);color:#1A1206;font-weight:700}
-button.primary:hover:not(:disabled){background:var(--gl);border-color:var(--gl);color:#1A1206}
-button.danger:hover:not(:disabled){border-color:var(--err);color:var(--err)}
-button.link{border:0;background:none;color:var(--gd);padding:2px 4px;text-decoration:underline;font-size:10.5px}
-.wizNav{display:flex;align-items:center;gap:10px;margin:16px 0 0}
-.wizNav .spacer{flex:1}
-.wizNav .why{font-size:11px;color:var(--warn);text-align:right}
+  /* ---------- 三步向导导航 ---------- */
+  .wiz {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin: 1.25rem 0;
+    border: var(--rule);
+    background: var(--surface-container-low);
+  }
+  .wstep {
+    min-height: 48px;
+    padding: 0.65rem 0.9rem;
+    border: 0;
+    border-right: var(--rule);
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--on-surface-variant);
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+  }
+  .wstep:last-child { border-right: 0; }
+  .wstep:hover { background: var(--surface-container); color: var(--on-surface); }
+  .wstep .num {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border: var(--field-rule);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .wstep .wtxt { min-width: 0; flex: 1; }
+  .wstep .wt { font-size: 0.9375rem; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wstep .ws { font-size: 0.75rem; display: block; color: var(--on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wstep.cur {
+    background: var(--surface-container);
+    color: var(--on-surface);
+    border-bottom-color: var(--primary);
+  }
+  .wstep.cur .num {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+  }
+  .wstep.done .num {
+    border-color: var(--positive);
+    color: var(--positive);
+  }
+  .wstep.err .num {
+    background: var(--error-bg);
+    border-color: var(--error);
+    color: var(--error);
+  }
+  .wstep.err .ws { color: var(--error); }
 
-/* ---------- 检查项（步骤 2/3 用） ---------- */
-.checks{display:flex;flex-direction:column;gap:8px}
-.check{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--bd2);
-  border-radius:6px;background:#0F0E11}
-.check .ic{width:17px;height:17px;flex:none;border-radius:50%;display:grid;place-items:center;
-  font-size:10px;font-weight:700;border:1px solid var(--bd);color:var(--mu);background:var(--panel);margin-top:1px}
-.check.ok .ic{border-color:var(--ok);background:var(--ok);color:#10240F}
-.check.warn .ic{border-color:var(--warn);background:var(--warn);color:#2A1F06}
-.check.err .ic{border-color:var(--err);background:var(--err);color:#2A0F0B}
-.check .body{flex:1;min-width:0}
-.check .t{font-size:11.5px;color:var(--tx);font-weight:600}
-.check .d{font-size:10.5px;color:var(--gd);margin-top:3px;line-height:1.6;word-break:break-all}
-.check .d code{background:#000;border:1px solid var(--bd2);border-radius:3px;padding:1px 5px;
-  color:var(--gl);font-family:Menlo,monospace;font-size:10px}
-.check button{padding:5px 11px;font-size:11px;margin-top:0}
+  /* ---------- 卡片与通用控件 ---------- */
+  .card {
+    border: var(--rule);
+    background: var(--surface-container-low);
+    padding: 1.25rem 1.35rem;
+    margin-bottom: 1rem;
+  }
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: var(--rule);
+    flex-wrap: wrap;
+  }
+  .card-head h2 {
+    margin: 0;
+    font-size: var(--subhead-size);
+    font-weight: 600;
+    color: var(--on-surface);
+  }
+  .card-head .status-pill {
+    margin-left: auto;
+    font-family: var(--font-label);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.15rem 0.65rem;
+    border-radius: var(--rounded-full);
+    border: var(--rule);
+    color: var(--on-surface-variant);
+    background: var(--surface-container);
+  }
+  .card-head .status-pill.ok { color: var(--positive); background: var(--positive-bg); border-color: var(--positive); }
+  .card-head .status-pill.warn { color: var(--warning); background: var(--warning-bg); border-color: var(--warning); }
+  .card-head .status-pill.err { color: var(--error); background: var(--error-bg); border-color: var(--error); }
 
-/* ---------- 步骤 4：任务仪表盘 ---------- */
-.dashTop{display:flex;align-items:flex-start;gap:14px}
-.dashIcon{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;
-  font-size:20px;border:1px solid var(--bd);background:var(--field);color:var(--gd)}
-.dashIcon.running{color:#1A1206;background:var(--gold);border-color:var(--gold);animation:pulse 1.3s ease-in-out infinite}
-.dashIcon.ok{color:#10240F;background:var(--ok);border-color:var(--ok)}
-.dashIcon.err{color:#2A0F0B;background:var(--err);border-color:var(--err)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-.dashBody{flex:1;min-width:0}
-.dashPhase{font-size:17px;font-weight:800;color:var(--gp)}
-.dashPhase.running{color:var(--gl)}
-.dashHint{font-size:11.5px;color:var(--gd);margin-top:4px;line-height:1.65}
-.dashHint b{color:var(--tx);font-weight:600}
-.dashStats{display:flex;gap:24px;margin-top:13px;flex-wrap:wrap}
-.stat{min-width:74px}
-.stat .k{font-size:10px;color:var(--mu);letter-spacing:.4px}
-.stat .v{font-size:15px;font-weight:700;color:var(--gp);font-family:Menlo,monospace;margin-top:2px}
-.stat .v.on{color:var(--ok)} .stat .v.mid{color:var(--warn)}
-.steps{display:flex;align-items:center;margin-top:15px}
-.step{flex:1;min-width:0;position:relative;text-align:center}
-.step .dot{width:22px;height:22px;margin:0 auto;border-radius:50%;border:1px solid var(--bd);
-  background:var(--field);display:grid;place-items:center;font-size:10px;color:var(--mu);position:relative;z-index:2}
-.step .lb{font-size:10px;color:var(--mu);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.step::before{content:"";position:absolute;top:11px;left:0;right:50%;height:1px;background:var(--bd2)}
-.step::after{content:"";position:absolute;top:11px;left:50%;right:0;height:1px;background:var(--bd2)}
-.step:first-child::before,.step:last-child::after{display:none}
-.step.done .dot{border-color:var(--gold);background:var(--gold);color:#1A1206;font-weight:700}
-.step.done .lb{color:var(--gd)}
-.step.done::before,.step.done::after{background:var(--gold)}
-.step.active .dot{border-color:var(--gl);background:var(--field);color:var(--gl);box-shadow:0 0 0 3px rgba(199,154,63,.16)}
-.step.active .lb{color:var(--gl);font-weight:700}
-.step.active::before{background:var(--gold)}
-.step.err .dot{border-color:var(--err);background:var(--err);color:#2A0F0B}
-.step.err .lb{color:var(--err)}
+  .btn-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  button.btn {
+    min-height: 40px;
+    padding: 0 1rem;
+    border: var(--field-rule);
+    border-radius: 0;
+    background: var(--surface-container);
+    color: var(--on-surface);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+  }
+  button.btn:hover:not(:disabled) {
+    background: var(--primary-container);
+    border-color: var(--primary);
+    color: var(--on-primary-container);
+  }
+  button.btn:disabled { opacity: 0.42; cursor: not-allowed; }
+  button.btn.primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+    font-weight: 600;
+  }
+  button.btn.primary:hover:not(:disabled) {
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+  button.btn.danger:hover:not(:disabled) {
+    background: var(--error-bg);
+    border-color: var(--error);
+    color: var(--error);
+  }
+  button.btn.sm { min-height: 34px; padding: 0 0.75rem; font-size: 0.8125rem; }
 
-/* ---------- 日志（折叠） ---------- */
-summary.h2s{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--gl);letter-spacing:.3px;
-  list-style:none;display:flex;align-items:center;gap:9px}
-summary.h2s::-webkit-details-marker{display:none}
-summary.h2s .caret{color:var(--gd);font-size:10px;transition:transform .15s}
-details[open] summary.h2s .caret{transform:rotate(90deg)}
-details[open] summary.h2s{margin-bottom:11px}
-summary.h2s .sm{margin-left:auto;font-weight:400;font-size:10.5px;color:var(--gd)}
-#log{background:var(--log);border-radius:7px;padding:11px 13px;height:clamp(140px,26vh,300px);
-  overflow:auto;font-family:Menlo,"SF Mono",ui-monospace,monospace;font-size:11px;line-height:1.62;
-  white-space:pre-wrap;word-break:break-all;border:1px solid var(--bd2)}
-#log div{min-height:1.62em}
-.l-ok{color:var(--ok)} .l-hi{color:var(--gl)} .l-warn{color:var(--warn)}
-.l-err{color:var(--err)} .l-dim{color:var(--gd)} .l-cmd{color:#9A8F76}
+  .row { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .row:last-child { margin-bottom: 0; }
+  .row > label { min-width: 84px; font-size: 0.875rem; font-weight: 500; color: var(--on-surface); }
+  .field {
+    flex: 1;
+    min-width: 180px;
+    min-height: 40px;
+    padding: 0.45rem 0.75rem;
+    border: var(--field-rule);
+    border-radius: 0;
+    background: var(--background);
+    color: var(--on-surface);
+    font-size: 0.875rem;
+  }
+  .field.small { flex: none; width: 180px; }
+  .field::placeholder { color: var(--on-surface-variant); opacity: 0.75; }
+  .field[readonly] { background: var(--surface-container); color: var(--on-surface-variant); }
 
-/* ---------- 底栏 ---------- */
-footer{margin-top:auto;border-top:1px solid var(--bd2);padding-top:10px;display:flex;
-  justify-content:space-between;gap:12px;font-size:10px;color:var(--gd);flex-wrap:wrap}
-footer .env{display:flex;gap:14px;flex-wrap:wrap}
-footer .dot{color:var(--mu)}
-footer .no{color:var(--mu)}
+  .note { font-size: 0.8125rem; color: var(--on-surface-variant); }
+  .result-line {
+    margin-top: 0.65rem;
+    font-family: var(--font-label);
+    font-size: 0.8125rem;
+    color: var(--on-surface-variant);
+    min-height: 1.4em;
+    word-break: break-all;
+  }
+  .result-line.err { color: var(--error); }
+  .result-line.ok { color: var(--positive); }
 
-/* ---------- 授权对话框 ---------- */
-.modal{position:fixed;inset:0;background:rgba(5,5,7,.82);display:grid;place-items:center;z-index:50;padding:20px}
-.modal[hidden]{display:none}
-.sheet{width:min(460px,100%);background:var(--panel);border:1px solid var(--bd);border-radius:12px;
-  padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.sheet h3{margin:0 0 10px;font-size:14px;color:var(--gl)}
-.sheetp{margin:0 0 14px;font-size:11.5px;color:var(--gd);line-height:1.7}
-.sheetp.alt{margin:14px 0 0;font-size:10.5px;color:var(--mu)}
-.sheet code{background:#000;border:1px solid var(--bd2);border-radius:3px;padding:1px 5px;color:var(--gl);font-family:Menlo,monospace}
-.sheet .row{margin-bottom:10px}
-.sheet .err{color:var(--err);font-size:11px;min-height:16px}
-.remember{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--gd);cursor:pointer}
-.remember input{accent-color:var(--gold);width:13px;height:13px}
-.dlgActions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
+  /* ---------- 语义提示条 ---------- */
+  .callout-strip {
+    border-left: 3px solid var(--primary);
+    background: var(--surface-container);
+    padding: 0.75rem 1rem;
+    margin: 0.85rem 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--on-surface);
+  }
+  .callout-strip.positive { border-left-color: var(--positive); background: var(--positive-bg); }
+  .callout-strip.warning { border-left-color: var(--warning); background: var(--warning-bg); }
+  .callout-strip.error { border-left-color: var(--error); background: var(--error-bg); }
+  .callout-strip b { font-weight: 600; }
 
-@media (max-width:620px){
-  .wrap{padding:16px 13px 20px}
-  .row{flex-wrap:wrap}
-  .row>label{width:auto}
-  .field.small{width:100%}
-  .wstep .lb{display:none}
-  .wstep.cur .lb{display:block}
-  .dashStats{gap:14px}
-  .step .lb{display:none}
-  .step.active .lb{display:block}
-  footer .env{flex-direction:column;gap:3px}
-}
+  /* ---------- 步骤 1：任务清单 ---------- */
+  .qbar {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 1rem 0 0.6rem;
+    flex-wrap: wrap;
+  }
+  .qbar .qt { font-size: 0.9375rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; }
+  .qcount {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: var(--rounded-full);
+    border: var(--rule);
+    background: var(--surface-container);
+    color: var(--on-surface);
+  }
+  .spacer { flex: 1; }
+  .qlist { border: var(--rule); background: var(--background); }
+  .qlist .empty { padding: 1.35rem 1rem; font-size: 0.875rem; color: var(--on-surface-variant); text-align: center; }
+  .qitem {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 44px;
+    padding: 0.45rem 0.75rem;
+    border-bottom: var(--rule);
+    font-size: 0.875rem;
+    transition: background var(--dur-micro) var(--ease-out);
+  }
+  .qitem:last-child { border-bottom: 0; }
+  .qitem:hover { background: var(--surface-container-low); }
+  .qitem.cur { background: var(--cur-row-bg); }
+  .qitem.drag { opacity: 0.45; }
+  .qitem.over { border-top: 2px solid var(--primary); }
+  .qitem .grip {
+    color: var(--on-surface-variant);
+    font-size: 1rem;
+    cursor: grab;
+    flex: none;
+    padding: 0 0.2rem;
+    user-select: none;
+  }
+  .qitem[data-locked="1"] .grip { cursor: default; color: var(--primary); }
+  .qitem .idx {
+    width: 24px;
+    flex: none;
+    font-family: var(--font-label);
+    font-size: 0.8125rem;
+    color: var(--on-surface-variant);
+    text-align: right;
+  }
+  .qitem .qname {
+    flex: 1;
+    min-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-label);
+    font-weight: 500;
+    color: var(--on-surface);
+  }
+  .qitem .qmeta {
+    max-width: 38%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+  }
+  .tag {
+    flex: none;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.1rem 0.55rem;
+    border-radius: var(--rounded-full);
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+  .qitem .x {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--on-surface-variant);
+    font-size: 1rem;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .qitem .x:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+
+  /* ---------- 步骤 2：环境与权限体检 ---------- */
+  .checks { display: flex; flex-direction: column; gap: 0.6rem; }
+  .check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 0.95rem;
+    border: var(--rule);
+    background: var(--background);
+  }
+  .check .ic {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    border: var(--field-rule);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 0.1rem;
+    color: var(--on-surface-variant);
+  }
+  .check.ok .ic { border-color: var(--positive); background: var(--positive-bg); color: var(--positive); }
+  .check.warn .ic { border-color: var(--warning); background: var(--warning-bg); color: var(--warning); }
+  .check.err .ic { border-color: var(--error); background: var(--error-bg); color: var(--error); }
+  .check .body { flex: 1; min-width: 0; }
+  .check .t { font-size: 0.9375rem; font-weight: 600; color: var(--on-surface); }
+  .check .d { font-size: 0.8125rem; color: var(--on-surface-variant); margin-top: 0.2rem; line-height: 1.55; word-break: break-all; }
+  .check .d code, .sudo-box code {
+    font-family: var(--font-label);
+    font-size: 0.8125rem;
+    padding: 0.1rem 0.35rem;
+    background: var(--surface-container);
+    border: var(--rule);
+    color: var(--on-surface);
+  }
+  .sudo-box {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: var(--rule);
+  }
+  .sudo-box h3 { margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 600; }
+  .remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 32px;
+    font-size: 0.8125rem;
+    color: var(--on-surface-variant);
+    cursor: pointer;
+  }
+  .remember input { accent-color: var(--primary); width: 15px; height: 15px; }
+
+  /* ---------- 步骤 3：执行侧载仪表盘 ---------- */
+  .target-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.95rem;
+    border: var(--rule);
+    background: var(--background);
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .target-bar .tlb {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary);
+  }
+  .target-bar .tname {
+    font-family: var(--font-label);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--on-surface);
+    word-break: break-all;
+  }
+  .target-bar .tmeta {
+    font-family: var(--font-label);
+    font-size: 0.8125rem;
+    color: var(--on-surface-variant);
+  }
+
+  .dash-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .dash-phase {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+  .dash-phase.running { color: var(--primary); }
+  .dash-phase.ok { color: var(--positive); }
+  .dash-phase.err { color: var(--error); }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .kpi-tile {
+    background: var(--background);
+    border: var(--rule);
+    padding: 0.75rem 0.9rem;
+  }
+  .kpi-tile .k {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+    letter-spacing: 0.04em;
+  }
+  .kpi-tile .v {
+    font-family: var(--font-label);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--on-surface);
+    margin-top: 0.2rem;
+  }
+  .kpi-tile .v.on { color: var(--positive); }
+  .kpi-tile .v.mid { color: var(--warning); }
+
+  /* ---------- 五段里程碑条 ---------- */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.4rem;
+    margin-top: 1rem;
+  }
+  .step {
+    border: var(--rule);
+    background: var(--background);
+    padding: 0.5rem 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+  .step .dot {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    border: var(--field-rule);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+  }
+  .step .lb {
+    font-size: 0.8125rem;
+    color: var(--on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .step.done { border-color: var(--positive); background: var(--positive-bg); }
+  .step.done .dot { border-color: var(--positive); color: var(--positive); font-weight: 700; }
+  .step.done .lb { color: var(--on-surface); font-weight: 500; }
+  .step.active { border-color: var(--primary); border-bottom-width: 2px; background: var(--primary-container); }
+  .step.active .dot { border-color: var(--primary); background: var(--primary); color: var(--on-primary); font-weight: 700; }
+  .step.active .lb { color: var(--on-primary-container); font-weight: 600; }
+  .step.err { border-color: var(--error); background: var(--error-bg); }
+  .step.err .dot { border-color: var(--error); color: var(--error); font-weight: 700; }
+  .step.err .lb { color: var(--error); }
+
+  /* ---------- 底部向导翻页栏 ---------- */
+  .wiz-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-top: 1.15rem;
+    padding-top: 0.9rem;
+    border-top: var(--rule);
+    flex-wrap: wrap;
+  }
+  .wiz-nav .why { font-size: 0.8125rem; color: var(--warning); }
+
+  /* ---------- 折叠高级设置与日志 ---------- */
+  details.appendix summary {
+    min-height: 40px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--on-surface);
+  }
+  details.appendix summary::-webkit-details-marker { display: none; }
+  details.appendix summary .mark {
+    font-family: var(--font-label);
+    color: var(--primary);
+    font-weight: 700;
+    width: 1rem;
+  }
+  details.appendix[open] summary {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.9rem;
+    border-bottom: var(--rule);
+  }
+  details.appendix summary .sm {
+    margin-left: auto;
+    font-family: var(--font-label);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--on-surface-variant);
+  }
+  #log {
+    background: var(--log-bg);
+    border: var(--rule);
+    padding: 0.75rem 0.9rem;
+    height: clamp(160px, 28vh, 320px);
+    overflow: auto;
+    font-family: var(--font-label);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-top: 0.75rem;
+  }
+  #log div { min-height: 1.55em; }
+  .l-ok { color: var(--positive); }
+  .l-hi { color: var(--primary); font-weight: 600; }
+  .l-warn { color: var(--warning); }
+  .l-err { color: var(--error); }
+  .l-dim { color: var(--on-surface-variant); }
+  .l-cmd { color: var(--log-cmd); }
+
+  .report-footer {
+    margin-top: auto;
+    border-top: 2px solid var(--on-surface);
+    padding-top: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--on-surface-variant);
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 900px) {
+    .page-grid { padding: 1.25rem 1rem 3rem; }
+    .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .page-grid { padding: 1rem 0.75rem 2.5rem; }
+    .wiz { grid-template-columns: 1fr; }
+    .wstep { border-right: 0; border-bottom: var(--rule); }
+    .wstep:last-child { border-bottom: 0; }
+    .field.small { width: 100%; }
+    .qitem .qmeta { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  @media print {
+    :root, :root[data-theme="dark"] {
+      color-scheme: light;
+      --background: #ffffff;
+      --surface-container-low: #f4f4f4;
+      --surface-container: #f4f4f4;
+      --surface-container-high: #e0e0e0;
+      --on-surface: #161616;
+      --on-surface-variant: #525252;
+      --outline: #8d8d8d;
+      --outline-variant: #e0e0e0;
+      --primary: #825400;
+      --on-primary: #ffffff;
+      --primary-container: #ffefd1;
+      --on-primary-container: #3b2400;
+      --positive: #198038;
+      --positive-bg: #defbe6;
+      --warning: #8e6a00;
+      --warning-bg: #fcf4d6;
+      --error: #da1e28;
+      --error-bg: #fff1f1;
+    }
+    .theme-bar, .wiz, .wiz-nav, .btn-row { display: none !important; }
+    section, .card, details.appendix { break-inside: avoid; }
+  }
 </style>
+<script>
+  (function () {
+    var m = "auto";
+    try { m = localStorage.getItem("zeeload-theme") || "auto"; } catch (e) {}
+    var d = m === "dark" || (m === "auto" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme-mode", m);
+    window.addEventListener("beforeprint", function () {
+      document.querySelectorAll("details:not([open])").forEach(function (el) {
+        el.setAttribute("data-print-opened", "1");
+        el.open = true;
+      });
+    });
+    window.addEventListener("afterprint", function () {
+      document.querySelectorAll("details[data-print-opened]").forEach(function (el) {
+        el.removeAttribute("data-print-opened");
+        el.open = false;
+      });
+    });
+  })();
+</script>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="logo"><img src="/assets/logo-128.png" alt="ZEEload"></div>
-    <div class="brand">
-      <h1>ZEEload <span>极载</span></h1>
-      <p>车机 APK 侧载 · 无需 root / adb / 证书</p>
+<div class="page-grid">
+  <header class="masthead">
+    <div class="mast-top">
+      <div class="logo-box" aria-hidden="true">
+        <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+          <path d="M220 210 H804 V312 H220 Z" fill="var(--on-surface)"/>
+          <path d="M804 210 V332 L322 612 H220 V498 Z" fill="var(--on-surface)"/>
+          <path d="M220 612 H804 V714 H220 Z" fill="var(--on-surface)"/>
+          <rect x="466" y="726" width="92" height="106" fill="var(--primary)"/>
+          <path d="M512 924 L376 814 H648 Z" fill="var(--primary)"/>
+        </svg>
+      </div>
+      <div class="brand">
+        <h1>ZEEload<span>极载</span></h1>
+        <p>极氪车机 APK 透明侧载工具 · 无需 root / adb / 安装证书</p>
+      </div>
+      <div class="theme-bar" role="group" aria-label="界面外观模式">
+        <button type="button" class="theme-btn" data-mode="auto" aria-pressed="true" onclick="setTheme('auto')">自动</button>
+        <button type="button" class="theme-btn" data-mode="light" aria-pressed="false" onclick="setTheme('light')">浅色</button>
+        <button type="button" class="theme-btn" data-mode="dark" aria-pressed="false" onclick="setTheme('dark')">深色</button>
+      </div>
     </div>
-    <div class="badge" id="plat">MACOS</div>
   </header>
-  <hr class="rule">
 
-  <!-- 向导步进 -->
-  <nav class="wiz" id="wiz">
-    <div class="wstep" data-i="0" onclick="go(0)"><div class="dot">1</div><div class="lb">导入 APK</div></div>
-    <div class="wstep" data-i="1" onclick="go(1)"><div class="dot">2</div><div class="lb">检查环境</div></div>
-    <div class="wstep" data-i="2" onclick="go(2)"><div class="dot">3</div><div class="lb">获取权限</div></div>
-    <div class="wstep" data-i="3" onclick="go(3)"><div class="dot">4</div><div class="lb">开始任务</div></div>
+  <div class="meta-strip" id="metaStrip" aria-live="polite">
+    <span class="meta-item">平台 <b id="metaPlat">MACOS</b></span>
+    <span class="meta-item" id="metaMitm">mitmdump <b>检测中…</b></span>
+    <span class="meta-item" id="metaIface">共享热点 <b>检测中…</b></span>
+    <span class="meta-item" id="metaCar">车机租约 <b>检测中…</b></span>
+    <span class="meta-item" id="metaSudo">管理员权限 <b>检测中…</b></span>
+  </div>
+
+  <!-- 三步向导步进器 -->
+  <nav class="wiz" id="wiz" aria-label="侧载步骤导航">
+    <button type="button" class="wstep cur" data-i="0" onclick="go(0)">
+      <span class="num">1</span>
+      <span class="wtxt">
+        <span class="wt">选择 APK</span>
+        <span class="ws" id="wSub0">尚未添加文件</span>
+      </span>
+    </button>
+    <button type="button" class="wstep" data-i="1" onclick="go(1)">
+      <span class="num">2</span>
+      <span class="wtxt">
+        <span class="wt">环境与权限</span>
+        <span class="ws" id="wSub1">待检查</span>
+      </span>
+    </button>
+    <button type="button" class="wstep" data-i="2" onclick="go(2)">
+      <span class="num">3</span>
+      <span class="wtxt">
+        <span class="wt">开始侧载</span>
+        <span class="ws" id="wSub2">待就绪</span>
+      </span>
+    </button>
   </nav>
 
-  <!-- ============ 步骤 1：导入 APK ============ -->
-  <section class="card" id="pane1">
-    <h2><b>1</b>导入要侧载的 APK<span class="r" id="p1State"></span></h2>
-    <div class="row">
-      <input class="field mono" id="apkPath" placeholder="点「浏览…」可以一次选多个 APK；也可以直接粘一个路径">
-      <button onclick="pickApk()">浏览…</button>
-    </div>
-    <div class="hint" id="apkHint">尚未选择 APK</div>
-
-    <div class="qhead">
-      <span class="qt">任务清单 <span class="qcount" id="qCount">0</span></span>
-      <span class="note gd">装完一个自动轮到下一个；点住条目左侧的 ⠿ 可以拖动排序</span>
-      <span class="spacer"></span>
-      <button class="danger" onclick="clearQueue()" id="qClear">清空</button>
-    </div>
-    <div class="qlist" id="qList"></div>
-    <div class="hint" id="queueHint" hidden></div>
-    <div class="wizNav">
-      <span class="spacer"></span>
-      <button class="primary" id="nav1" onclick="go(1)">下一步：检查环境</button>
-    </div>
-  </section>
-
-  <!-- ============ 步骤 2：检查环境 ============ -->
-  <section class="card" id="pane2" hidden>
-    <h2><b>2</b>检查运行环境<span class="r" id="p2State"></span></h2>
-    <div class="checks" id="envChecks"></div>
-    <div class="wizNav">
-      <button onclick="go(0)">上一步</button>
-      <span class="spacer"></span>
-      <button onclick="recheck()">重新检查</button>
-      <button class="primary" id="nav2" onclick="go(2)">下一步：获取权限</button>
-    </div>
-  </section>
-
-  <!-- ============ 步骤 3：获取权限 ============ -->
-  <section class="card" id="pane3" hidden>
-    <h2><b>3</b>获取管理员权限<span class="r" id="p3State"></span></h2>
-    <div class="checks" id="sudoChecks"></div>
-    <div class="wizNav">
-      <button onclick="go(1)">上一步</button>
-      <span class="spacer"></span>
-      <button class="primary" id="nav3" onclick="go(3)">下一步：开始任务</button>
-    </div>
-  </section>
-
-  <!-- ============ 步骤 4：任务 ============ -->
-  <section id="pane4" hidden>
-    <div class="card">
-      <h2><b>4</b>执行任务<span class="r" id="p4State"></span></h2>
-      <div class="dashTop">
-        <div class="dashIcon" id="dashIcon">○</div>
-        <div class="dashBody">
-          <div class="dashPhase" id="dashPhase">准备就绪</div>
-          <div class="dashHint" id="dashHint">点「开始」，然后到车机上点开任意应用的详情页。</div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="primary" id="btnStart" onclick="start()">开始</button>
-          <button id="btnStop" onclick="stop()" disabled>停止</button>
-          <button id="btnNext" onclick="nextApk()" disabled>下一个</button>
-        </div>
+  <main>
+    <!-- ============ 步骤 1：选择 APK ============ -->
+    <section class="card" id="pane1">
+      <div class="card-head">
+        <h2>步骤 1 · 导入要侧载的 APK</h2>
+        <span class="status-pill" id="p1State">待选择</span>
       </div>
-      <div class="dashStats">
-        <div class="stat"><div class="k">拦截</div><div class="v" id="statHooked">—</div></div>
-        <div class="stat"><div class="k">注入</div><div class="v" id="statInject">0</div></div>
-        <div class="stat"><div class="k">替换</div><div class="v" id="statReplace">0</div></div>
-        <div class="stat"><div class="k">已用时</div><div class="v" id="statElapsed">0:00</div></div>
+
+      <div class="btn-row">
+        <button type="button" class="btn primary" id="btnPickMain" onclick="pickApk()">选择 APK（可多选）…</button>
+        <button type="button" class="btn" id="btnPickAppend" onclick="pickQueue()">+ 追加到队列尾</button>
       </div>
-      <div class="steps" id="steps">
-        <div class="step" data-k="env"><div class="dot">1</div><div class="lb">环境</div></div>
-        <div class="step" data-k="hook"><div class="dot">2</div><div class="lb">拦截</div></div>
-        <div class="step" data-k="inject"><div class="dot">3</div><div class="lb">注入</div></div>
-        <div class="step" data-k="replace"><div class="dot">4</div><div class="lb">替换</div></div>
-        <div class="step" data-k="done"><div class="dot">5</div><div class="lb">安装</div></div>
+
+      <div class="row" style="margin-top:0.85rem">
+        <label for="apkPath">本地路径</label>
+        <input class="field mono" id="apkPath" placeholder="也可直接粘贴本机 .apk 完整路径后按回车">
+        <button type="button" class="btn sm" id="btnLoadPath" onclick="loadTypedPath()">载入路径</button>
       </div>
-      <div class="wizNav">
-        <button onclick="go(2)">上一步</button>
+      <div class="result-line" id="apkHint">尚未选择 APK</div>
+
+      <div class="qbar">
+        <span class="qt">侧载任务队列 <span class="qcount" id="qCount">0</span></span>
+        <span class="note">第 1 项为当前任务，装完自动切换下一项；按住左侧 ⠿ 可拖动排序</span>
         <span class="spacer"></span>
-        <span class="why" id="runWhy"></span>
+        <button type="button" class="btn sm danger" onclick="clearQueue()" id="qClear" disabled>清空队列</button>
       </div>
-    </div>
+      <div class="qlist" id="qList"></div>
 
-    <div class="card soft">
-      <details>
-        <summary class="h2s"><span class="caret">▶</span>高级设置与运行日志<span class="sm" id="logSm">收起状态</span></summary>
-        <div class="row">
-          <label>注入包名</label>
-          <input class="field small" id="pkg" value="ALL">
-          <span class="note">ALL = 匹配所有应用的更新请求；也可填 com.zeekr.xxx</span>
-        </div>
-        <div class="row">
-          <label>输出目录</label>
-          <input class="field mono" id="outdir" placeholder="留空 = 项目内 logs/">
-          <button onclick="openOut()">打开</button>
-        </div>
-        <div class="row">
-          <label>诊断</label>
-          <button onclick="diagnose()">跑一次环境检查</button>
-          <button onclick="clearLog()">清空日志</button>
-        </div>
-        <div id="log" style="margin-top:10px"></div>
-      </details>
-    </div>
-  </section>
+      <div class="wiz-nav">
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="nav1" onclick="go(1)" disabled>下一步：环境与权限</button>
+      </div>
+    </section>
 
-  <footer>
-    <div class="env" id="env"></div>
-    <div class="no">仅限自有车辆的研究 / 自用，请勿用于他人车辆</div>
+    <!-- ============ 步骤 2：环境与权限（合并体检 + 内联授权） ============ -->
+    <section class="card" id="pane2" hidden>
+      <div class="card-head">
+        <h2>步骤 2 · 检查环境与管理员权限</h2>
+        <button type="button" class="btn sm" onclick="recheck()">重新检查</button>
+        <span class="status-pill" id="p2State">检查中</span>
+      </div>
+
+      <div class="checks" id="envChecks"></div>
+
+      <div class="sudo-box" id="sudoBox">
+        <h3>管理员权限（sudo）</h3>
+        <div class="checks" id="sudoStatus"></div>
+
+        <div id="sudoFormWrap" style="margin-top:0.75rem">
+          <div class="row">
+            <label for="sudoPw">Mac 密码</label>
+            <input class="field" type="password" id="sudoPw" placeholder="输入当前 Mac 登录密码以配置 pf 转发规则" autocomplete="current-password">
+            <button type="button" class="btn primary" id="sudoOk" onclick="sudoSubmit()">验证授权</button>
+          </div>
+          <div class="row" style="justify-content:space-between">
+            <label class="remember">
+              <input type="checkbox" id="sudoRemember">
+              <span>本次运行内记住密码（仅驻留进程内存，退出即销毁）</span>
+            </label>
+            <span class="note">密码仅经 <code>sudo -S</code> 校验，不写磁盘；也支持启动前在同一终端先执行 <code>sudo -v</code></span>
+          </div>
+          <div class="result-line err" id="sudoErr" hidden></div>
+        </div>
+      </div>
+
+      <div class="wiz-nav">
+        <button type="button" class="btn" onclick="go(0)">上一步：选择 APK</button>
+        <span class="spacer"></span>
+        <span class="why" id="p2Why"></span>
+        <button type="button" class="btn primary" id="nav2" onclick="go(2)" disabled>下一步：开始侧载</button>
+      </div>
+    </section>
+
+    <!-- ============ 步骤 3：执行侧载 ============ -->
+    <section id="pane3" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h2>步骤 3 · 执行透明侧载</h2>
+          <span class="status-pill" id="p3State">待就绪</span>
+        </div>
+
+        <!-- 当前目标 APK 上下文条 -->
+        <div class="target-bar">
+          <span class="tlb">当前目标</span>
+          <span class="tname" id="curApkName">未选择 APK</span>
+          <span class="tmeta" id="curApkMeta"></span>
+          <span class="spacer"></span>
+          <span class="tmeta" id="curQueueRem"></span>
+          <button type="button" class="btn sm" id="btnNext" onclick="nextApk()" disabled>切到下一个</button>
+        </div>
+
+        <div class="dash-top">
+          <div>
+            <div class="dash-phase" id="dashPhase">准备就绪</div>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn primary" id="btnStart" onclick="start()">开始侧载</button>
+            <button type="button" class="btn danger" id="btnStop" onclick="stop()" disabled>停止并卸载规则</button>
+          </div>
+        </div>
+
+        <!-- 醒目的车机端操作提示条 -->
+        <div class="callout-strip" id="carActionStrip">
+          点击上方「开始侧载」启动透明代理。
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-tile"><div class="k">流量接管</div><div class="v" id="statHooked">待命</div></div>
+          <div class="kpi-tile"><div class="k">元数据注入次数</div><div class="v" id="statInject">0</div></div>
+          <div class="kpi-tile"><div class="k">APK 切片替换段数</div><div class="v" id="statReplace">0</div></div>
+          <div class="kpi-tile"><div class="k">本轮已用时</div><div class="v" id="statElapsed">0:00</div></div>
+        </div>
+
+        <div class="steps" id="steps" aria-label="本轮侧载里程碑">
+          <div class="step" data-k="env"><span class="dot">1</span><span class="lb">环境预检</span></div>
+          <div class="step" data-k="hook"><span class="dot">2</span><span class="lb">接管流量</span></div>
+          <div class="step" data-k="inject"><span class="dot">3</span><span class="lb">注入更新</span></div>
+          <div class="step" data-k="replace"><span class="dot">4</span><span class="lb">替换传输</span></div>
+          <div class="step" data-k="done"><span class="dot">5</span><span class="lb">停止收尾</span></div>
+        </div>
+
+        <div class="wiz-nav">
+          <button type="button" class="btn" onclick="go(1)">上一步：环境与权限</button>
+          <span class="spacer"></span>
+          <span class="why" id="runWhy"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <details class="appendix" id="advDetails">
+          <summary>
+            <span class="mark" aria-hidden="true">+</span>
+            <span>高级设置与运行日志</span>
+            <span class="sm" id="logSm">0 行</span>
+          </summary>
+          <div class="row">
+            <label for="pkg">注入包名</label>
+            <input class="field small mono" id="pkg" value="ALL">
+            <span class="note">默认 <code>ALL</code> 匹配所有已安装应用；也可指定单个包名如 <code>com.zeekr.media.podcast</code></span>
+          </div>
+          <div class="row">
+            <label for="outdir">日志目录</label>
+            <input class="field mono" id="outdir" placeholder="留空默认写入项目内 logs/">
+            <button type="button" class="btn sm" onclick="openOut()">在访达中打开</button>
+          </div>
+          <div class="row">
+            <label>环境诊断</label>
+            <div class="btn-row">
+              <button type="button" class="btn sm" onclick="diagnose()">写入完整诊断报告</button>
+              <button type="button" class="btn sm" onclick="clearLog()">清空日志</button>
+            </div>
+          </div>
+          <div id="log" role="log" aria-live="off"></div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="report-footer">
+    <span>ZEEload · 本地回环服务（127.0.0.1），日志仅保存于本机</span>
+    <span>仅限自有车辆研究与自用，禁止用于商业代装或他人车辆</span>
   </footer>
-</div>
-
-<div id="sudoDlg" class="modal" hidden>
-  <div class="sheet">
-    <h3>输入管理员密码</h3>
-    <p class="sheetp">引擎要改 pf 转发规则、并监听 443，必须 root。<br>
-       密码只用于本机 <code>sudo</code>，不会写到磁盘、不会出现在日志里。</p>
-    <div class="row">
-      <label>密码</label>
-      <input class="field" type="password" id="sudoPw" placeholder="Mac 登录密码" autocomplete="current-password">
-    </div>
-    <label class="remember"><input type="checkbox" id="sudoRemember"> 本次运行内记住（进程退出即丢）</label>
-    <div class="err" id="sudoErr"></div>
-    <div class="dlgActions">
-      <button onclick="sudoCancel()">取消</button>
-      <button class="primary" onclick="sudoSubmit()" id="sudoOk">授权</button>
-    </div>
-    <p class="sheetp alt">不想在这里输密码？在终端里执行一次 <code>sudo -v</code> 也行——效果一样。</p>
-  </div>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
+const TOKEN = (document.querySelector('meta[name="zeeload-token"]') || {}).content || '';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+));
+
 let logLen = 0, step = 0, startedAt = 0, finishedAt = 0;
-let S = null;   // 最近一次 /api/state
+let S = null;
+let refreshing = false, pollTimer = null, initialPositioned = false;
 
-const EXIT_HINT = {
-  0:'本轮正常结束', 130:'本轮被中断（属于正常收尾）',
-  10:'车机没连上热点：检查「互联网共享」是否开', 11:'端口 18080 被占用：先点「停止」',
-  12:'找不到 mitmdump：pip3 install mitmproxy', 13:'mitmproxy 低于 12.3（缺 --emudhra）：pip3 install -U mitmproxy'
-};
-const PHASE_HINT = {
-  '待开始':'选好 APK 后点「开始」，然后到车机上点开任意应用的详情页。',
-  '启动':'正在准备 pf 规则与 mitmdump，约 2–4 秒…',
-  '运行中':'代理已经接住车机的流量。现在到车机上点开任意应用的详情页。',
-  '已拦截':'代理已经接住车机的流量。现在到车机上点开任意应用的详情页。',
-  '已注入更新':'更新已就位。在详情页点「更新」，接着看下面的替换计数往上走。',
-  '商店已确认，等待下载':'商店已经接受这个哈希，等它开始下载 .apk。',
-  '替换下载中':'正在把下载内容换成你的包，别断开热点。',
-  '完成':'本轮结束。装完可以改上面的路径再点「开始」，或点「下一个」继续队列。',
-  '环境不满足':'环境有问题，展开下面的「运行日志」看 E 行。'
-};
-const PHASE_STEP = {'待开始':-1,'':0,'启动':0,'已拦截':1,'已注入更新':2,
-  '商店已确认，等待下载':3,'替换下载中':3,'完成':4,'环境不满足':-1};
-const PHASE_ICON = {'待开始':'○','启动':'◐','已拦截':'◑','已注入更新':'◕',
-  '商店已确认，等待下载':'◕','替换下载中':'●','完成':'✓','环境不满足':'!'};
-
-/* ---------------- 向导 ---------------- */
-function go(n){
-  if (n > step){                       // 只允许往前走已完成的前置
-    if (n >= 1 && !apkReady()) return;
-    if (n >= 2 && !envReady()) return;
-    if (n >= 3 && !sudoReady()) return;
-  }
-  step = n;
-  [1,2,3,4].forEach(i => { $('pane'+i).hidden = (i !== n+1); });
-  render();
-  window.scrollTo({top:0, behavior:'smooth'});
+/* ---------------- 三态调光 ---------------- */
+function applyTheme(mode){
+  const dark = mode === 'dark' || (mode === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme-mode', mode);
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false');
+  });
 }
+function setTheme(mode){
+  try { localStorage.setItem('zeeload-theme', mode); } catch (_) {}
+  applyTheme(mode);
+}
+if (window.matchMedia){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const cur = document.documentElement.getAttribute('data-theme-mode') || 'auto';
+    if (cur === 'auto') applyTheme('auto');
+  });
+}
+applyTheme(document.documentElement.getAttribute('data-theme-mode') || 'auto');
+
+$('advDetails').addEventListener('toggle', e => {
+  const m = e.currentTarget.querySelector('.mark');
+  if (m) m.textContent = e.currentTarget.open ? '−' : '+';
+});
+
+/* ---------------- 阶段文案与映射 ---------------- */
+const EXIT_HINT = {
+  0: '本轮已正常停止并卸载 pf 转发规则。',
+  130: '本轮已中断收尾，pf 转发规则已自动卸载。',
+  10: '未检测到共享热点或车机连接：请检查「系统设置 → 通用 → 共享 → 互联网共享」并让车机重连 Wi-Fi。',
+  11: '代理端口 18080 被占用：请先点击「停止」或运行『停止并恢复.command』。',
+  12: '未找到可执行 mitmdump：请在项目 venv 或全局环境安装 mitmproxy。',
+  13: 'mitmproxy 版本低于 12.3（缺少 --emudhra）：请执行 pip3 install -U mitmproxy。'
+};
+
+const PHASE_GUIDE = {
+  '待开始': {kind: '', html: '点击右上角<b>「开始侧载」</b>启动透明代理，随后前往车机屏幕操作。'},
+  '启动': {kind: '', html: '正在配置本机 <b>pf 独立规则集</b>并启动 <b>mitmdump</b>（约 2–4 秒）…'},
+  '运行中': {kind: '', html: '<b>车机侧操作：</b>打开车机「应用商店」→ <b>点开任意一个已安装应用的「详情页」</b>（触发实时元数据请求）。'},
+  '已拦截': {kind: '', html: '<b>车机侧操作：</b>打开车机「应用商店」→ <b>点开任意一个已安装应用的「详情页」</b>（触发实时元数据请求）。'},
+  '透传（注入未生效）': {kind: 'warning', html: '<b>缓存告警：</b>商店复用了本地缓存（本次下载已原样透传）。请在车机商店<b>换点另一个应用的「详情页」</b>刷新元数据，待状态变为「已注入更新」后再点更新。'},
+  '已注入更新': {kind: 'positive', html: '<b>注入已就位：</b>请在车机当前应用详情页点击<b>「更新」</b>，随后观察下方「APK 切片替换段数」增长。'},
+  '商店已确认，等待下载': {kind: 'positive', html: '<b>签名请求已放行：</b>商店已采纳目标 APK 哈希，正在发起下载请求，请保持热点连接。'},
+  '替换下载中': {kind: 'positive', html: '<b>正在向车机传输目标 APK：</b>请勿断开热点！观察<b>车机屏幕提示安装完成</b>后，再点击上方<b>「停止并卸载规则」</b>结束本轮。'},
+  '完成': {kind: 'positive', html: '<b>本轮收尾完成：</b>pf 转发规则已卸载，车机恢复正常直连网络。'},
+  '环境不满足': {kind: 'error', html: '<b>环境预检未通过：</b>请展开下方「高级设置与运行日志」查看具体错误行，或返回第 2 步排查。'}
+};
+
+const PHASE_STEP = {
+  '待开始': -1, '': 0, '启动': 0, '运行中': 1, '已拦截': 1,
+  '透传（注入未生效）': 1, '已注入更新': 2,
+  '商店已确认，等待下载': 3, '替换下载中': 3, '完成': 4, '环境不满足': -1
+};
+
+/* ---------------- 三步向导切换 ---------------- */
 const apkReady  = () => !!(S && S.apk.ok);
 const envReady  = () => { const e = S && S.env; return !!(e && e.emudhra && e.iface && e.port_free); };
 const sudoReady = () => { const e = S && S.env; return !!(e && (!e.want_sudo || e.sudo)); };
+const step2Ready = () => envReady() && sudoReady();
+
+function go(n){
+  if (n > step){
+    if (n >= 1 && !apkReady()) return;
+    if (n >= 2 && !step2Ready() && !(S && S.running)) return;
+  }
+  step = n;
+  [1, 2, 3].forEach(i => { $('pane' + i).hidden = (i !== n + 1); });
+  if (S){
+    renderChecks();
+    setWizard();
+  }
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
 
 function setWizard(){
-  const ok = [apkReady(), envReady(), sudoReady()];
-  const blocker = ok.findIndex(v => !v);            // 第一个没满足的门（-1 = 全满足）
+  const ok0 = apkReady();
+  const ok1 = step2Ready();
+  const running = !!(S && S.running);
+  $('wSub0').textContent = ok0 ? `${S.apk.name}${(S.queue_paths && S.queue_paths.length > 1) ? ' 等 ' + S.queue_paths.length + ' 个' : ''}` : '尚未添加文件';
+  $('wSub1').textContent = ok1 ? '环境与权限已就绪' : (!envReady() ? '有环境阻塞项' : '等待管理员授权');
+  $('wSub2').textContent = running ? (S.phase || '运行中') : (ok0 && ok1 ? '随时可开始' : '等待前置步骤');
+
+  const blocker = !ok0 ? 0 : (!ok1 ? 1 : -1);
   document.querySelectorAll('.wstep').forEach(el => {
     const i = +el.dataset.i;
     el.className = 'wstep';
-    if (i === step) el.classList.add('cur');        // 当前面板永远是当前
-    else if (i < step) el.classList.add('done');    // 走过的都是已完成
-    if (i === blocker && i !== step) el.classList.add('err');  // 卡住的那一步标红
+    if (i === step) el.classList.add('cur');
+    else if (i === 0 && ok0) el.classList.add('done');
+    else if (i === 1 && ok1) el.classList.add('done');
+    if (i === blocker && i !== step && !running) el.classList.add('err');
   });
 }
 
-function chk(kind, title, detail, action){
+function chk(kind, title, detail){
+  const sym = kind === 'ok' ? '✓' : kind === 'err' ? '!' : '·';
   return `<div class="check ${kind}">
-    <div class="ic">${kind==='ok'?'✓':kind==='err'?'!':'·'}</div>
+    <div class="ic">${sym}</div>
     <div class="body"><div class="t">${title}</div><div class="d">${detail}</div></div>
-    ${action || ''}
   </div>`;
+}
+
+function renderMetaStrip(){
+  if (!S) return;
+  const e = S.env;
+  $('metaPlat').textContent = e.platform === 'darwin' ? 'MACOS' : String(e.platform || '').toUpperCase();
+
+  const mMitm = $('metaMitm');
+  mMitm.className = 'meta-item ' + (e.emudhra ? 'ok' : 'err');
+  mMitm.innerHTML = `mitmdump <b>${e.emudhra ? esc(e.version) : '缺失/过低'}</b>`;
+
+  const mIface = $('metaIface');
+  mIface.className = 'meta-item ' + (e.iface ? 'ok' : 'err');
+  mIface.innerHTML = `共享热点 <b>${e.iface ? esc(e.iface + ' (' + e.host_ip + ')') : '未开启'}</b>`;
+
+  const mCar = $('metaCar');
+  mCar.className = 'meta-item ' + (e.car ? 'ok' : 'warn');
+  mCar.innerHTML = `车机租约 <b>${e.car ? esc(e.car) : '暂未识别'}</b>`;
+
+  const mSudo = $('metaSudo');
+  const sOk = !e.want_sudo || e.sudo;
+  mSudo.className = 'meta-item ' + (sOk ? 'ok' : 'warn');
+  mSudo.innerHTML = `管理员权限 <b>${sOk ? '已授权' : '待授权'}</b>`;
 }
 
 function renderChecks(){
   const e = S ? S.env : {};
-  // 步骤 2：环境
   let h = '';
   h += e.emudhra
-    ? chk('ok','mitmdump 可用', `${e.version}（支持 <code>--emudhra</code>）`)
-    : chk('err','mitmdump 缺失或版本过低', '需要 mitmproxy 12.3+：<code>pip3 install -U mitmproxy</code>');
+    ? chk('ok', 'mitmdump 可用', `${esc(e.version)}（已支持 <code>--emudhra</code> 证书链）`)
+    : chk('err', 'mitmdump 缺失或版本过低', '需要 mitmproxy 12.3+，请在终端执行：<code>pip3 install -U mitmproxy</code>');
   h += e.iface
-    ? chk('ok','共享接口已就绪', `<code>${e.iface}</code> · 本机 ${e.host_ip}${e.car ? ' · 车机 ' + e.car : ' · 还没看到车机租约'}`)
-    : chk('err','没有共享接口', '打开「系统设置 → 通用 → 共享 → 互联网共享」，共享到 Wi-Fi，再让车机连上这个热点');
+    ? chk('ok', '互联网共享接口已就绪', `接口 <code>${esc(e.iface)}</code> · 本机网关 ${esc(e.host_ip)}`)
+    : chk('err', '未检测到共享热点接口', '请前往「系统设置 → 通用 → 共享 → 互联网共享」，将网络共享到 Wi-Fi 并让车机连接该热点');
   h += e.car
-    ? chk('ok','已识别车机', `${e.car}${e.car_mac ? '（' + e.car_mac + '）' : ''}`)
-    : chk('warn','还没看到车机', '车机连上热点后这里会自动出现；不影响继续，但开始后可能收不到流量');
-  h += e.port_free
-    ? chk('ok',`端口 ${e.port} 空闲`,'引擎会占用这个端口做透明代理')
-    : chk('err',`端口 ${e.port} 被占用`, `被 <code>${e.port_owner || '未知进程'}</code> 占用：先点「停止」或运行『停止并恢复』`);
+    ? chk('ok', '已识别车机 DHCP 租约', `车机 IP <code>${esc(e.car)}</code>${e.car_mac ? ' · MAC <code>' + esc(e.car_mac) + '</code>' : ''}`)
+    : chk('warn', '暂未匹配到车机名称租约', '不影响继续（引擎将回退按整个热点网段转发），车机连上热点后会自动刷新');
+  h += e.port_self
+    ? chk('ok', `代理端口 ${esc(e.port)} 运行中`, '当前侧载引擎正在监听该端口')
+    : e.port_free
+    ? chk('ok', `代理端口 ${esc(e.port)} 空闲`, '引擎启动后将监听该端口接收透明转发流量')
+    : chk('err', `代理端口 ${esc(e.port)} 被占用`, `当前被 <code>${esc(e.port_owner || '未知进程')}</code> 占用：请先停止旧任务或运行『停止并恢复.command』`);
   $('envChecks').innerHTML = h;
-  const bad = !e.emudhra || !e.iface || !e.port_free;
-  $('nav2').disabled = bad;
-  $('p2State').textContent = bad ? '有阻塞项' : '可以继续';
-  $('p2State').className = 'r ' + (bad ? 'err' : 'ok');
 
-  // 步骤 3：权限
-  let g = '';
+  // 内联管理员权限区
+  const sOk = sudoReady();
   if (!e.want_sudo){
-    g += chk('ok','不需要管理员权限','当前平台不要求 sudo');
-  } else if (e.sudo){
-    g += chk('ok','已获得管理员权限', 'sudo 时间戳有效；任务开始时不会再问密码');
+    $('sudoStatus').innerHTML = chk('ok', '当前已在管理员上下文运行', '无需额外输入 sudo 密码');
+    $('sudoFormWrap').hidden = true;
+  } else if (sOk){
+    $('sudoStatus').innerHTML = chk('ok', '已获得管理员权限', 'sudo 凭证有效（任务运行期间每 45 秒自动续期，开始任务时无需再次输入）');
+    $('sudoFormWrap').hidden = true;
   } else {
-    g += chk('warn','还没有管理员权限', '引擎要改 pf 转发规则、监听 443，必须 root。点右边按钮输一次密码。',
-             '<button class="primary" onclick="sudoPrime()">输入密码</button>');
+    $('sudoStatus').innerHTML = chk('warn', '尚未获得管理员权限', '加载 pf 透明转发规则需要 root 权限，请在下方验证一次 Mac 登录密码');
+    $('sudoFormWrap').hidden = false;
   }
-  g += chk('ok','密码不会被保存','只通过 <code>sudo -S</code> 从标准输入递一次，不落盘、不进日志');
-  g += chk('ok','也可以走终端', '在终端里执行一次 <code>sudo -v</code>，回到这一步会自动变绿');
-  $('sudoChecks').innerHTML = g;
-  $('nav3').disabled = !sudoReady();
-  $('p3State').textContent = sudoReady() ? '可以继续' : '等待授权';
-  $('p3State').className = 'r ' + (sudoReady() ? 'ok' : 'warn');
 
-  // 步骤 4 的可启动条件
-  const ready = apkReady() && envReady() && sudoReady();
-  $('p4State').textContent = ready ? '就绪' : '条件未满足';
-  $('p4State').className = 'r ' + (ready ? 'ok' : 'warn');
-  $('runWhy').textContent = ready ? '' :
-    (!apkReady() ? '还没选 APK' : !envReady() ? '环境有阻塞项（回第 2 步）' : '还没拿到管理员权限（回第 3 步）');
+  const okAll = step2Ready();
+  $('nav2').disabled = !okAll;
+  $('p2State').textContent = okAll ? '全部就绪' : (!envReady() ? '环境有阻塞项' : '待授权 sudo');
+  $('p2State').className = 'status-pill ' + (okAll ? 'ok' : (!envReady() ? 'err' : 'warn'));
+  $('p2Why').textContent = !envReady() ? '请先解决标红的环境阻塞项' : (!sOk ? '请先完成上方管理员密码验证' : '');
+
+  // 步骤 3 状态胶囊
+  const running = !!(S && S.running);
+  const ready = apkReady() && okAll;
+  $('p3State').textContent = running ? '侧载运行中' : (ready ? '就绪' : '前置未满足');
+  $('p3State').className = 'status-pill ' + (running || ready ? 'ok' : 'warn');
+  $('runWhy').textContent = running || ready ? '' :
+    (!apkReady() ? '尚未选择有效 APK（返回第 1 步）' : !envReady() ? '运行环境有阻塞项（返回第 2 步）' : '尚未验证管理员权限（返回第 2 步）');
 }
 
-/* ---------------- 仪表盘 ---------------- */
+/* ---------------- 步骤 3 仪表盘 ---------------- */
 function setDash(phase, opts){
   opts = opts || {};
   const p = phase || '待开始';
   $('dashPhase').textContent = p;
-  $('dashPhase').className = 'dashPhase' + (opts.running ? ' running' : '');
-  const ic = $('dashIcon');
-  ic.className = 'dashIcon' + (opts.running ? ' running' : opts.error ? ' err' : (p === '完成' ? ' ok' : ''));
-  ic.textContent = opts.error ? '!' : (PHASE_ICON[p] || '○');
-  $('dashHint').innerHTML = opts.hint || PHASE_HINT[p] || '';
-  let idx = PHASE_STEP[p] !== undefined ? PHASE_STEP[p] : -1;
-  const steps = document.querySelectorAll('#steps .step');
-  steps.forEach((el, i) => {
+  $('dashPhase').className = 'dash-phase' + (opts.running ? ' running' : opts.error ? ' err' : (p === '完成' ? ' ok' : ''));
+
+  const g = PHASE_GUIDE[p] || {kind: '', html: ''};
+  const strip = $('carActionStrip');
+  const kind = opts.error ? 'error' : (opts.kind !== undefined ? opts.kind : g.kind);
+  strip.className = 'callout-strip' + (kind ? ' ' + kind : '');
+  strip.innerHTML = opts.hint || g.html;
+
+  const idx = PHASE_STEP[p] !== undefined ? PHASE_STEP[p] : -1;
+  document.querySelectorAll('#steps .step').forEach((el, i) => {
     el.className = 'step';
     if (opts.error && i === 0) el.classList.add('err');
+    else if (p === '完成') el.classList.add('done');
     else if (i < idx) el.classList.add('done');
     else if (i === idx) el.classList.add('active');
   });
 }
-const fmtDur = ms => { const s = Math.max(0, Math.floor(ms/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
 
-/* ---------------- 数据 ---------------- */
+const fmtDur = ms => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+};
+
+/* ---------------- 日志着色与请求封装 ---------------- */
 function logClass(line){
-  const s = line.trimStart();
+  const s = line.trimStart().replace(/^(?:zeekr_log:\s*|zeeload:\s*|\[(?:warn|info|error)\]\s*)+/, '');
   if (s.startsWith('$ ')) return 'l-cmd';
   if (s.startsWith('[ok]')) return 'l-ok';
   if (s.startsWith('[inject-update]') || s.startsWith('[replace-apk]')) return 'l-hi';
   if (s.startsWith('警告') || s.startsWith('[..]') || s.startsWith('[!!]')) return 'l-warn';
-  if (s.startsWith('错误') || /^E1[0-9]/.test(s)) return 'l-err';
+  if (s.startsWith('错误') || /^E[0-9]{2}/.test(s)) return 'l-err';
   if (s.startsWith('[i]') || s.startsWith('===')) return 'l-dim';
   return '';
 }
+
 async function api(path, body){
-  const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'},
-                               body: JSON.stringify(body || {})});
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-ZEEload-Token': TOKEN},
+    body: JSON.stringify(body || {})
+  });
   return r.json();
 }
 
+function schedulePoll(ms){
+  if (pollTimer) clearTimeout(pollTimer);
+  pollTimer = setTimeout(refresh, ms);
+}
+
 async function refresh(){
-  try { S = await fetch('/api/state?since=' + logLen).then(r => r.json()); }
-  catch(e){
-    setDash('环境不满足', {error:true, hint:'后端进程已经不在了：回终端看它是否退出，然后重新运行 <b>./zeeload.command</b>。'});
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    const r = await fetch('/api/state?since=' + logLen, {headers: {'X-ZEEload-Token': TOKEN}});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    S = await r.json();
+  } catch (e){
+    setDash('环境不满足', {error: true, hint: '<b>后端连接已断开：</b>请返回终端确认程序状态，必要时重新执行 <code>./zeeload.command</code>。'});
+    refreshing = false;
+    schedulePoll(1800);
     return;
   }
-  const e = S.env, running = S.running, fin = S.finished;
+  try {
+    const running = S.running, fin = S.finished;
 
-  // 底栏
-  $('env').innerHTML = [
-    `mitmdump ${e.emudhra ? '✓ ' + e.version : '✗'}`,
-    `共享接口 ${e.iface ? e.iface : '✗ 未检测到'}`,
-    `车机 ${e.car || '未检测到'}`,
-    `sudo ${e.sudo ? '✓' : '未授权'}`
-  ].join('<span class="dot"> | </span>');
-  $('plat').textContent = e.platform === 'darwin' ? 'MACOS' : e.platform.toUpperCase();
-
-  // 步骤 1
-  if (document.activeElement !== $('apkPath')) $('apkPath').value = S.apk.path || '';
-  const hint = $('apkHint');
-  if (S.apk.ok && S.apk.path){
-    hint.className = 'hint';
-    hint.textContent = `${S.apk.name}    ${S.apk.mib}    sha256 ${S.apk.sha256.slice(0,24)}…`;
-  } else if (S.apk.error){ hint.className = 'hint err'; hint.textContent = '✗ ' + S.apk.error; }
-  else { hint.className = 'hint'; hint.textContent = '尚未选择 APK'; }
-  $('p1State').textContent = apkReady() ? '已就绪' : '待选择';
-  $('p1State').className = 'r ' + (apkReady() ? 'ok' : '');
-  $('nav1').disabled = !apkReady();
-
-  renderQueue(S.queue_paths || [], S.apk.path || '');
-
-  // 步骤 2/3
-  if (step === 1 || step === 2) renderChecks();
-  setWizard();
-
-  // 步骤 4
-  const phase = running ? S.phase : (fin ? ((fin.code === 0 || fin.code === 130) ? '完成' : '环境不满足') : '待开始');
-  let hintText = '';
-  if (fin && !running){
-    hintText = (fin.code === 0 || fin.code === 130)
-      ? `本轮已结束。${S.queue_len ? `队列还有 ${S.queue_len} 个，点「下一个」继续。` : '可以改上面的路径再点「开始」。'}`
-      : (EXIT_HINT[fin.code] || `引擎退出码 ${fin.code}`);
-  } else if (running && phase === '替换下载中'){
-    hintText = `正在把下载内容换成你的包 —— 已替换 <b>${S.replaced}</b> 段，别断开热点。`;
-  } else if (running && phase === '已注入更新'){
-    hintText = `更新已就位（已注入 <b>${S.injects}</b> 处）。到车机详情页点「更新」，接着看替换计数往上走。`;
-  }
-  setDash(phase, {running, error: !!(fin && !running && fin.code !== 0 && fin.code !== 130), hint: hintText});
-
-  $('statHooked').textContent = e.iface ? '已就绪' : '未就绪';
-  $('statHooked').className = 'v ' + (e.iface ? 'on' : 'mid');
-  $('statInject').textContent = S.injects || 0;
-  $('statInject').className = 'v' + (S.injects ? ' on' : '');
-  $('statReplace').textContent = S.replaced || 0;
-  $('statReplace').className = 'v' + (S.replaced ? ' on' : '');
-  if (running){ if (!startedAt) startedAt = Date.now(); finishedAt = 0; }
-  else if (startedAt && !finishedAt) finishedAt = Date.now();
-  const base = fin && fin.at ? fin.at * 1000 : Date.now();
-  $('statElapsed').textContent = startedAt ? fmtDur((running ? Date.now() : (finishedAt || base)) - startedAt) : '0:00';
-
-  $('btnStart').disabled = running || !(apkReady() && envReady() && sudoReady());
-  $('btnStop').disabled = !running;
-  $('btnNext').disabled = running || !S.queue_len;
-
-  // 日志
-  if (S.log && S.log.length){
-    const box = $('log');
-    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 24;
-    for (const line of S.log){
-      const d = document.createElement('div');
-      d.className = logClass(line); d.textContent = line;
-      box.appendChild(d);
+    // 首次加载时：若后台正在执行任务，直接跳至步骤 3 仪表盘
+    if (!initialPositioned){
+      initialPositioned = true;
+      go(running ? 2 : 0);
     }
-    while (box.childElementCount > 3000) box.firstChild.remove();
-    if (atBottom) box.scrollTop = box.scrollHeight;
-    logLen = S.log_len;
+
+    renderMetaStrip();
+
+    // 步骤 1：当前文件与队列
+    $('apkPath').readOnly = running;
+    $('btnLoadPath').disabled = running;
+    if (document.activeElement !== $('apkPath')) $('apkPath').value = S.apk.path || '';
+    const hint = $('apkHint');
+    if (S.apk.ok && S.apk.path){
+      hint.className = 'result-line ok';
+      hint.textContent = `当前任务：${S.apk.name}  ·  ${S.apk.mib || '计算中…'}  ·  ${S.apk.sha256 ? 'SHA-256 ' + S.apk.sha256.slice(0, 20) + '…' : '正在计算哈希…'}`;
+    } else if (S.apk.error){
+      hint.className = 'result-line err';
+      hint.textContent = '校验未通过：' + S.apk.error;
+    } else {
+      hint.className = 'result-line';
+      hint.textContent = '尚未选择 APK（支持一次多选导入任务队列）';
+    }
+    $('p1State').textContent = apkReady() ? `已选 ${(S.queue_paths || []).length || 1} 个` : '待选择';
+    $('p1State').className = 'status-pill ' + (apkReady() ? 'ok' : '');
+    $('nav1').disabled = !apkReady();
+
+    renderQueue(S.queue_paths || [], S.apk.path || '', running);
+    renderChecks();
+    setWizard();
+
+    // 步骤 3：当前目标上下文条
+    if (S.apk && S.apk.path){
+      $('curApkName').textContent = S.apk.name;
+      $('curApkMeta').textContent = S.apk.ok ? `${S.apk.mib}${S.apk.sha256 ? ' · ' + S.apk.sha256.slice(0, 12) + '…' : ''}` : S.apk.error;
+    } else {
+      $('curApkName').textContent = '未选择 APK';
+      $('curApkMeta').textContent = '';
+    }
+    $('curQueueRem').textContent = S.queue_len ? `后续排队 ${S.queue_len} 个` : '队列无后续项';
+
+    // 步骤 3：阶段与车机操作指引
+    const phase = running ? S.phase : (fin ? ((fin.code === 0 || fin.code === 130) ? '完成' : '环境不满足') : '待开始');
+    let hintHtml = '';
+    let customKind = undefined;
+    if (fin && !running){
+      if (fin.code === 0 || fin.code === 130){
+        customKind = 'positive';
+        hintHtml = (S.queue_paths && S.queue_paths.length)
+          ? `<b>本轮已结束并卸载规则。</b>队列已自动切至下一个目标 <b>${esc(S.apk.name)}</b>，确认车机上一个应用安装完毕后直接点击<b>「开始侧载」</b>继续。`
+          : '<b>全部队列已结束并卸载规则。</b>如需继续安装新应用，可返回步骤 1 重新选择 APK。';
+      } else {
+        customKind = 'error';
+        hintHtml = '<b>本轮异常终止：</b>' + esc(EXIT_HINT[fin.code] || `引擎退出码 ${fin.code}，请展开下方运行日志查看详情。`);
+      }
+    } else if (running && phase === '替换下载中'){
+      customKind = 'positive';
+      hintHtml = `<b>正在向车机传输 ${esc(S.apk.name)}（已替换 ${S.replaced} 段）：</b>请勿断开热点！待<b>车机屏幕显示安装完成</b>后，点击右上方<b>「停止并卸载规则」</b>。`;
+    } else if (running && phase === '已注入更新'){
+      customKind = 'positive';
+      hintHtml = `<b>元数据注入成功（已武装 ${S.injects} 次）：</b>请在车机当前详情页点击<b>「更新」</b>按钮触发下载替换。`;
+    }
+    setDash(phase, {
+      running,
+      error: !!(fin && !running && fin.code !== 0 && fin.code !== 130),
+      kind: customKind,
+      hint: hintHtml
+    });
+
+    if (running && S.hooked){
+      $('statHooked').textContent = '已接管';
+      $('statHooked').className = 'v on';
+    } else if (running){
+      $('statHooked').textContent = '启动中';
+      $('statHooked').className = 'v mid';
+    } else {
+      $('statHooked').textContent = '待命';
+      $('statHooked').className = 'v';
+    }
+    $('statInject').textContent = S.injects || 0;
+    $('statInject').className = 'v' + (S.injects ? ' on' : '');
+    $('statReplace').textContent = S.replaced || 0;
+    $('statReplace').className = 'v' + (S.replaced ? ' on' : '');
+
+    if (running){ if (!startedAt) startedAt = Date.now(); finishedAt = 0; }
+    else if (startedAt && !finishedAt) finishedAt = Date.now();
+    const base = fin && fin.at ? fin.at * 1000 : Date.now();
+    $('statElapsed').textContent = startedAt ? fmtDur((running ? Date.now() : (finishedAt || base)) - startedAt) : '0:00';
+
+    $('btnStart').disabled = running || !(apkReady() && step2Ready());
+    $('btnStop').disabled = !running;
+    $('btnNext').disabled = running || !S.queue_len;
+
+    // 幂等日志同步
+    const box = $('log');
+    if (S.log_base === 0 && logLen > 0){
+      box.innerHTML = '';
+      logLen = 0;
+    }
+    if (S.log && S.log.length && S.log_base === logLen){
+      const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 24;
+      for (const line of S.log){
+        const d = document.createElement('div');
+        d.className = logClass(line);
+        d.textContent = line;
+        box.appendChild(d);
+      }
+      while (box.childElementCount > 3000) box.firstChild.remove();
+      if (atBottom) box.scrollTop = box.scrollHeight;
+      logLen = S.log_len;
+    }
     $('logSm').textContent = `${logLen} 行`;
+  } finally {
+    refreshing = false;
+    schedulePoll(900);
   }
 }
 
-/* ---------------- 动作 ---------------- */
-async function pickApk(){ await api('/api/apk', {pick:true, enqueue:true}); refresh(); }
-async function pickQueue(){ await api('/api/queue', {pick:true}); refresh(); }
-async function clearQueue(){ await api('/api/queue', {action:'clear'}); refresh(); }
-async function removeAt(i){ await api('/api/queue', {action:'remove', index:i}); refresh(); }
-async function moveTo(from, to){ await api('/api/queue', {action:'move', from, to}); refresh(); }
+/* ---------------- 队列与操作事件 ---------------- */
+async function pickApk(){
+  const r = await api('/api/apk', {pick: true, enqueue: true});
+  if (!r.ok && r.msg && r.msg !== '未选择文件'){
+    $('apkHint').className = 'result-line err';
+    $('apkHint').textContent = r.msg;
+  }
+  refresh();
+}
+async function pickQueue(){ await api('/api/queue', {pick: true}); refresh(); }
+async function loadTypedPath(){
+  const v = $('apkPath').value.trim();
+  if (!v) return;
+  const r = await api('/api/apk', {path: v});
+  if (!r.ok){
+    $('apkHint').className = 'result-line err';
+    $('apkHint').textContent = r.msg || '路径无效';
+  }
+  refresh();
+}
+async function clearQueue(){ await api('/api/queue', {action: 'clear'}); refresh(); }
+async function removeAt(i){ await api('/api/queue', {action: 'remove', index: i}); refresh(); }
+async function moveTo(from, to){ await api('/api/queue', {action: 'move', from, to}); refresh(); }
 
-/* 任务清单：拖动排序用原生 HTML5 drag，不引第三方库 */
 let dragFrom = -1;
-function renderQueue(paths, cur){
+function renderQueue(paths, cur, running){
   const box = $('qList');
   $('qCount').textContent = paths.length;
-  $('qClear').disabled = !paths.length;
+  $('qClear').disabled = !paths.length || (running && paths.length <= 1);
   if (!paths.length){
-    box.innerHTML = '<div class="empty">清单是空的 —— 点上面「浏览…」选一个或多个 APK</div>';
+    box.innerHTML = '<div class="empty">队列为空 —— 点击上方「选择 APK（可多选）…」导入要侧载的安装包</div>';
     return;
   }
   const curAbs = (cur || '').trim();
@@ -621,78 +1430,106 @@ function renderQueue(paths, cur){
     const name = parts.pop() || p;
     const dir = parts.join('/') || '/';
     const isCur = curAbs && p === curAbs;
-    return `<div class="qitem${isCur ? ' cur' : ''}" draggable="true" data-i="${i}">
-      <span class="grip" title="拖动排序">⠿</span>
+    const locked = !!(running && i === 0);
+    return `<div class="qitem${isCur ? ' cur' : ''}" draggable="${locked ? 'false' : 'true'}" data-i="${i}" data-locked="${locked ? '1' : '0'}">
+      <span class="grip" title="${locked ? '运行中已锁定当前项' : '按住拖动调整顺序'}">${locked ? '●' : '⠿'}</span>
       <span class="idx">${i + 1}</span>
-      <span class="qname" title="${p}">${name}</span>
-      ${isCur ? '<span class="tag">当前</span>' : ''}
-      <span class="qmeta">${dir}</span>
-      <button class="x" title="移除" data-x="${i}">×</button>
+      <span class="qname" title="${esc(p)}">${esc(name)}</span>
+      ${isCur ? `<span class="tag">${running ? '运行中' : '当前目标'}</span>` : ''}
+      <span class="qmeta" title="${esc(dir)}">${esc(dir)}</span>
+      ${locked ? '' : `<button type="button" class="x" aria-label="移除 ${esc(name)}" title="从队列移除" data-x="${i}">×</button>`}
     </div>`;
   }).join('');
   box.querySelectorAll('[data-x]').forEach(b => {
     b.onclick = e => { e.stopPropagation(); removeAt(+b.dataset.x); };
   });
   box.querySelectorAll('.qitem').forEach(el => {
+    if (el.dataset.locked === '1') return;
     el.ondragstart = e => {
-      dragFrom = +el.dataset.i; el.classList.add('drag');
+      dragFrom = +el.dataset.i;
+      el.classList.add('drag');
       e.dataTransfer.effectAllowed = 'move';
-      try { e.dataTransfer.setData('text/plain', String(dragFrom)); } catch(_){}
+      try { e.dataTransfer.setData('text/plain', String(dragFrom)); } catch (_) {}
     };
-    el.ondragend = () => { el.classList.remove('drag');
-      box.querySelectorAll('.over').forEach(x => x.classList.remove('over')); };
-    el.ondragover = e => { e.preventDefault(); el.classList.add('over'); };
+    el.ondragend = () => {
+      el.classList.remove('drag');
+      box.querySelectorAll('.over').forEach(x => x.classList.remove('over'));
+    };
+    el.ondragover = e => {
+      const to = +el.dataset.i;
+      if (running && to === 0) return;
+      e.preventDefault();
+      el.classList.add('over');
+    };
     el.ondragleave = () => el.classList.remove('over');
     el.ondrop = e => {
-      e.preventDefault(); el.classList.remove('over');
+      e.preventDefault();
+      el.classList.remove('over');
       const to = +el.dataset.i;
-      if (dragFrom >= 0 && dragFrom !== to) moveTo(dragFrom, to);
+      if (dragFrom >= 0 && dragFrom !== to && !(running && to === 0)) moveTo(dragFrom, to);
       dragFrom = -1;
     };
   });
 }
-async function recheck(){ await api('/api/diagnose'); refresh(); }
+
+async function recheck(){ await api('/api/recheck'); refresh(); }
+
+async function sudoSubmit(){
+  const pw = $('sudoPw').value;
+  const errEl = $('sudoErr');
+  if (!pw){
+    errEl.hidden = false;
+    errEl.textContent = '请输入当前 Mac 登录密码';
+    return;
+  }
+  errEl.hidden = true;
+  $('sudoOk').disabled = true;
+  const r = await api('/api/sudo_auth', {password: pw, remember: $('sudoRemember').checked});
+  $('sudoOk').disabled = false;
+  if (!r.ok){
+    errEl.hidden = false;
+    errEl.textContent = r.msg || '授权失败';
+    return;
+  }
+  $('sudoPw').value = '';
+  errEl.hidden = true;
+  await refresh();
+  if (step2Ready()) go(2);
+}
 
 async function start(){
   await api('/api/options', {pkg: $('pkg').value.trim() || 'ALL', outdir: $('outdir').value});
-  if ($('apkPath').value.trim()) await api('/api/apk', {path: $('apkPath').value.trim()});
+  const inp = $('apkPath').value.trim();
+  if (inp && (!S || inp !== S.apk.path)){
+    const ar = await api('/api/apk', {path: inp});
+    if (!ar.ok){ setDash('环境不满足', {error: true, hint: esc(ar.msg)}); return; }
+  }
   const r = await api('/api/start');
-  if (!r.ok){ setDash('环境不满足', {error:true, hint:r.msg}); return; }
-  startedAt = Date.now(); finishedAt = 0;
+  if (!r.ok){ setDash('环境不满足', {error: true, hint: esc(r.msg)}); return; }
+  startedAt = Date.now();
+  finishedAt = 0;
   refresh();
 }
 async function stop(){ await api('/api/stop'); refresh(); }
 async function nextApk(){ await api('/api/next'); refresh(); }
-async function clearLog(){ await api('/api/clear'); $('log').innerHTML=''; logLen=0; $('logSm').textContent='0 行'; refresh(); }
-async function diagnose(){ await api('/api/diagnose'); document.querySelector('#log').closest('details').open = true; refresh(); }
+async function clearLog(){
+  await api('/api/clear');
+  $('log').innerHTML = '';
+  logLen = 0;
+  $('logSm').textContent = '0 行';
+  refresh();
+}
+async function diagnose(){
+  await api('/api/diagnose');
+  $('advDetails').open = true;
+  refresh();
+}
 async function openOut(){ await api('/api/outdir'); }
 
-function sudoPrime(){ $('sudoErr').textContent=''; $('sudoPw').value=''; $('sudoDlg').hidden=false; setTimeout(()=>$('sudoPw').focus(),30); }
-function sudoCancel(){ $('sudoDlg').hidden=true; }
-async function sudoSubmit(){
-  const pw = $('sudoPw').value;
-  if (!pw){ $('sudoErr').textContent='先输入密码'; return; }
-  $('sudoOk').disabled = true;
-  const r = await api('/api/sudo_auth', {password: pw, remember: $('sudoRemember').checked});
-  $('sudoOk').disabled = false;
-  if (!r.ok){ $('sudoErr').textContent = r.msg; return; }
-  $('sudoDlg').hidden = true; $('sudoPw').value='';
-  await refresh();
-  if (sudoReady()) go(3);
-}
 $('sudoPw').addEventListener('keydown', e => { if (e.key === 'Enter') sudoSubmit(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sudoDlg').hidden) sudoCancel(); });
-$('apkPath').addEventListener('change', async () => {
-  const v = $('apkPath').value.trim();
-  if (v){ await api('/api/apk', {path:v}); refresh(); }
-});
+$('apkPath').addEventListener('keydown', e => { if (e.key === 'Enter') loadTypedPath(); });
 
-refresh().then(() => {
-  // 永远从第 1 步开始：清单为空时不该把用户直接扔到「获取权限」，
-  // 那会让人以为第 1、2 步不存在。步进条可点击，想跳随时跳。
-  go(0);
-});
-setInterval(refresh, 900);
+refresh();
 </script>
 </body>
 </html>

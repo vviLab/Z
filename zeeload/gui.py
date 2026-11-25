@@ -3,7 +3,7 @@
 运行：
     python3 -m zeeload.gui [apk1.apk apk2.apk ...]
 
-设计要点（与 TUI 一致的地方都放在 zeeload.common）：
+设计要点（公共逻辑都放在 zeeload.common）：
   * 一轮一进程：每次「开始」都是引擎的一次完整调用，卸 pf / 停 mitmdump 由引擎自己收尾
   * 状态不靠猜：全部来自引擎已经打印的那些前缀（[inject-update] / [replace-apk] / E1x）
   * 需要 root 的动作只在「开始」时提权；提权失败直接说清楚，不静默降级
@@ -413,7 +413,7 @@ def run(apks: list[str] | None = None) -> int:
     if tk is None:
         print("这个 Python 没带 Tk，图形界面起不来。")
         print("  换带 Tk 的解释器：ZEEKR_PY=/usr/bin/python3 ./zeeload.command")
-        print("  或改用终端界面：./zeeload.command --tui")
+        print("  或改用默认 WebUI：./zeeload.command")
         return 2
     root = tk.Tk()
     ZEEloadApp(root, apks or [])

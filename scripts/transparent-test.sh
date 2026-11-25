@@ -42,6 +42,7 @@ FAKE_SIGN=0
 REPLACE_APK=""
 INJECT_PKG=""
 INTERCEPT_ALL=0
+OUT_BASE=${ZEEKR_OUT_BASE:-$BASE/logs}
 while [ $# -gt 0 ]; do
   case "$1" in
     --all-443) MODE=all443; shift ;;
@@ -61,6 +62,9 @@ while [ $# -gt 0 ]; do
     --replace-apk)
       [ $# -ge 2 ] || { echo "--replace-apk 需要 APK 路径" >&2; exit 2; }
       REPLACE_APK=$2; shift 2 ;;
+    --out-dir)
+      [ $# -ge 2 ] || { echo "--out-dir 需要目录路径" >&2; exit 2; }
+      OUT_BASE=$2; shift 2 ;;
     --check-only) CHECK_ONLY=1; shift ;;
     --corrupt)
       [ $# -ge 2 ] || { echo "--corrupt 需要偏移字节数" >&2; exit 2; }
@@ -148,7 +152,7 @@ say() { printf '%s\n' "$*"; }
 warn() { printf '警告：%s\n' "$*" >&2; }
 die() { printf '错误：%s\n' "$*" >&2; exit 1; }
 STAMP=$(date +%Y%m%d-%H%M%S)
-OUT=$BASE/logs/$STAMP
+OUT=$OUT_BASE/$STAMP
 RULEFILE=$OUT/rdr.conf
 LOG=$OUT/mitm.log
 FLOW=$OUT/flows.mitm
@@ -198,7 +202,7 @@ cleanup() {
 
   # root 创建的产物交还给执行 sudo 的用户
   if [ -n "${SUDO_UID:-}" ]; then
-    chown -R "$SUDO_UID:${SUDO_GID:-$SUDO_UID}" "$BASE/logs" "$BASE/mitm-config" 2>/dev/null
+    chown -R "$SUDO_UID:${SUDO_GID:-$SUDO_UID}" "$OUT" "$BASE/mitm-config" 2>/dev/null
   fi
 
   say ""
@@ -484,6 +488,7 @@ if [ -n "$REPLACE_APK" ]; then
 fi
 
 export PYTHONUNBUFFERED=1
+export PYTHONDONTWRITEBYTECODE=1
 "$MITMDUMP" "${MITM_ARGS[@]}" 2>&1 | tee -a "$LOG" &
 PROXY_STARTED=1
 PROXY_WAIT=$!

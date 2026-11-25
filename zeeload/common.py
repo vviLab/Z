@@ -1,6 +1,6 @@
-"""zeeload.common — GUI 与 TUI 共用的一层。
+"""zeeload.common — 界面层公共模块。
 
-这里只放「两个界面都要做、且必须做一致」的东西：
+这里放界面层需要一致处理的逻辑：
   * 调引擎（scripts/transparent-test.sh）并解析它的输出 → 状态机
   * 算 APK 的 sha256/md5/大小
   * 探测共享接口、车机租约、mitmdump 位置（这些不需要 root）
@@ -15,6 +15,7 @@ import hashlib
 import os
 import re
 import shutil
+import socket
 import subprocess
 import threading
 import time
@@ -187,13 +188,21 @@ def detect_lease(prefix: str = "") -> tuple[str, str]:
 
 
 def port_busy() -> str:
+    # 先用回环 connect_ex 快速探测（<0.2ms），空闲时免去跑耗时的 lsof
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sk:
+            sk.settimeout(0.15)
+            if sk.connect_ex(("127.0.0.1", PORT)) != 0:
+                return ""
+    except OSError:
+        pass
     try:
         out = subprocess.run(
             ["lsof", "-nP", f"-iTCP:{PORT}", "-sTCP:LISTEN"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True, text=True, timeout=5,
         ).stdout.strip().splitlines()
     except Exception:
-        return ""
+        return "unknown"
     if len(out) > 1:
         return out[1].split()[0]
     return ""
@@ -260,9 +269,12 @@ def parse_line(line: str, st: EngineState) -> None:
     elif t.startswith("[inject-update]"):
         st.injects += 1
         st.hooked = True
+        st.passthrough = False
     elif t.startswith("[replace-apk] 商店已用"):
         st.sign_seen = True
+        st.passthrough = False
     elif t.startswith("[replace-apk] 以 "):
+        st.passthrough = False
         m = re.search(r"以 (\S+?) \(", t)
         if m:
             st.replaced.append(m.group(1))
@@ -287,14 +299,14 @@ def _phase_of(st: EngineState) -> str:
     `[ok] mitmdump 已启动` 之后插件仍会继续打 `zeekr_log:` 行，
     而且碰巧顺序不固定，最后一次赋值会把阶段打回去。改成按里程碑归约。
     """
-    if st.passthrough:
-        return "透传（注入未生效）"
     if st.replaced:
         return "替换下载中"
-    if st.injects:
-        return "已注入更新"
+    if st.passthrough:
+        return "透传（注入未生效）"
     if st.sign_seen:
         return "商店已确认，等待下载"
+    if st.injects:
+        return "已注入更新"
     if st.hooked:
         return "运行中"
     return st.phase
@@ -303,11 +315,12 @@ def _phase_of(st: EngineState) -> str:
 class Round:
     """一次引擎调用。所有回调都在调用方给的事件循环里触发（界面自己决定线程）。"""
 
-    def __init__(self) -> None:
+    def __init__(self, kill_fn: Callable[[int, bool], bool] | None = None) -> None:
         self.state = EngineState()
         self.proc: subprocess.Popen | None = None
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+        self._kill_fn = kill_fn
 
     # --- 生命周期 -------------------------------------------------------
     def start(self, args: list[str],
@@ -336,14 +349,17 @@ class Round:
                 except (BrokenPipeError, AttributeError):
                     pass
             assert self.proc.stdout is not None
-            for raw in iter(self.proc.stdout.readline, b""):
-                text = raw.decode("utf-8", "replace")
-                for one in text.splitlines() or [""]:
-                    parse_line(one, self.state)
-                    on_line(_clean(one), self)
-                if self._stop.is_set():
-                    self._kill()
-                    break
+            try:
+                for raw in iter(self.proc.stdout.readline, b""):
+                    text = raw.decode("utf-8", "replace")
+                    for one in text.splitlines() or [""]:
+                        parse_line(one, self.state)
+                        on_line(_clean(one), self)
+                    if self._stop.is_set():
+                        self._kill()
+                        break
+            except (OSError, ValueError):
+                pass
             code = self.proc.wait()
             self.state.exit_code = code
             on_exit(code, self)
@@ -359,13 +375,26 @@ class Round:
         p = self.proc
         if p and p.poll() is None:
             try:
-                p.terminate()
+                try:
+                    p.terminate()
+                except PermissionError:
+                    if self._kill_fn:
+                        self._kill_fn(p.pid, False)
                 for _ in range(30):
                     if p.poll() is not None:
                         break
                     time.sleep(0.1)
                 if p.poll() is None:
-                    p.kill()
+                    try:
+                        p.kill()
+                    except PermissionError:
+                        if self._kill_fn:
+                            self._kill_fn(p.pid, True)
+                    if p.stdout:
+                        try:
+                            p.stdout.close()
+                        except Exception:
+                            pass
             except Exception:
                 pass
 
@@ -379,7 +408,7 @@ class Round:
 def engine_args(apk_path: str, pkg: str = "ALL", *, domains: str = "",
                 hosts: str = "", reset_states: bool = False,
                 allow_quic_proxy: bool = False) -> list[str]:
-    """GUI/TUI 共用的默认参数：全量 443 + 全解密 + 注入 + 替换。"""
+    """界面层共用的默认参数：全量 443 + 全解密 + 注入 + 替换。"""
     args = ["bash", ENGINE, "--all-443", "--intercept-all",
             "--inject-update", pkg or "ALL", "--replace-apk", apk_path]
     if domains:

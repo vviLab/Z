@@ -1,495 +1,244 @@
 # 极载 · ZEEload
 
-> # 🛑 Research Preview · 请勿公开分发
->
-> ### **仅限口口相传，请勿发帖、请勿宣传。**
->
-> **请不要**把本项目发到微博、小红书、知乎、B 站、抖音、X（推特）、V2EX、贴吧、微信群、Telegram 群、公众号、短视频或任何论坛；
-> 也**不要**提交到导航站、聚合站、Awesome 列表或开源推荐号。
->
-> **原因**：本项目是**学术研究与技术探讨**性质的课题，用于观察车机应用商店的更新机制与证书信任链设计，面向的是小范围的交流与复现。
-> 公开传播容易被断章取义、被当成「破解工具」转发，既偏离研究初衷，也容易带来不必要的误解与风险。
->
-> 想交流的话，**私下告诉有研究兴趣的朋友就好**，并提醒对方不要外传。
+> **Research Preview · 仅限小范围学术研究与技术交流，禁止公开分发。**
+> 禁止转发至微博、小红书、知乎、B 站、抖音、X、V2EX、贴吧、微信群、Telegram 群、公众号、短视频平台、论坛、导航站或 Awesome 列表。本项目用于观察车机应用商店的更新机制与证书信任链设计，避免脱离研究语境产生误解与合规风险。
+
+> **一句话定位**：在无 root、无 adb、车机禁止未知来源安装的前提下，利用透明代理将第三方 APK 伪装为商店应用更新并完成安装。
+> **版本与证据口径**：v1.2.0（2026-11-25，macOS 专用）；已在极氪 7X（ZEEKR OS）实测安装 DiPlay、ES 文件浏览器与 MT 管理器；完整技术论证与抓包证据见 [docs/技术路径-车机APK侧载.md](docs/技术路径-车机APK侧载.md)。本项目为 AI 辅助编程产物，代码未经第三方安全审计。
 
 ![ZEEload](assets/banner.png)
-
-在没有 root、没有 adb、车机不允许安装未知来源应用的情况下，**把任意 APK 装进极氪车机**。
-
-原理是让车机自己的应用商店把它当成一次「应用更新」安装下去：透明解密商店流量 → 注入一条假更新 → 把下载内容换掉。全程不修改车机系统、不往车机装证书，退出即恢复。
-
-> 当前版本：**v1.2.0**（2026-11-25）· macOS 版已在极氪 7X 实测成功（DiPlay、ES 文件浏览器、MT管理器）；提供四步向导式 WebUI、终端界面（TUI）与一键脚本，支持一次会话连续侧载多个 APK。**Windows 版已于 v1.1.0 移除**（见文末[版本](#版本)）
-> 技术原理与安全分析见 [docs/技术路径-车机APK侧载.md](docs/技术路径-车机APK侧载.md)
-> 本项目是 **AI 辅助编程项目**：需求、方案与实测由作者主导，代码与文档在 AI 协助下完成，可能存在未知缺陷，请自行审阅与评估。
 
 ---
 
 ## 目录
 
-- [下载（发布包）](#下载发布包)
-- [适用条件](#适用条件)
-- [环境要求（版本）](#环境要求版本)
-- [原理](#原理)
-- [两个漏洞的组合](#两个漏洞的组合)
-- [快速开始（macOS）](#快速开始macos)
-- [界面（WebUI 为主）](#界面webui-为主)
-- [向导四步](#向导四步)
-- [连续侧载多个 APK](#连续侧载多个-apk)
-- [结果判读](#结果判读)
-- [常见问题](#常见问题)
-- [让 AI 帮你配置](#让-ai-帮你配置)
-- [已知限制](#已知限制)
-- [安全与合规](#安全与合规)
-- [文件结构](#文件结构)
+- [1. 适用条件与环境要求](#1-适用条件与环境要求)
+- [2. 工作原理与组合漏洞](#2-工作原理与组合漏洞)
+- [3. 使用方式（WebUI 与命令行）](#3-使用方式webui-与命令行)
+- [4. 连续侧载与引擎生命周期](#4-连续侧载与引擎生命周期)
+- [5. 已知限制与安全合规](#5-已知限制与安全合规)
+- [6. 排障指引](#6-排障指引)
+- [附录](#附录)
 
-## 下载（发布包）
+---
 
-到 [Releases](https://github.com/zhujinle/ZEELoad/releases) 下载对应平台的压缩包：
+## 1. 适用条件与环境要求
 
-| 平台 | 发布包 | 解压后 |
-|---|---|---|
-| macOS 13+ | `ZEELoad-macOS.zip`（约 0.4 MB） | 先装 mitmproxy（见下），再双击 `ZEELoad/一键侧载安装.command`，把 APK 拖上去 |
+本工具仅运行于 macOS 13+，除 `mitmproxy >= 12.3` 外全部使用系统自带工具与 Python 标准库实现，车机侧无需任何修改或安装证书。
 
-> ℹ️ **Windows 版已移除**（v1.1.0 起）。`ZEELoad-Windows-x64.zip` 与本仓库 `windows/` 目录都不再提供，
-> 历史版本可从 Git 历史（v1.0.1 标签）取回。工具现在只支持 macOS。
->
-> 🍎 macOS 包是脚本集合（已带 Unix 权限、LF 换行），**不含 mitmproxy**：
-> `pip3 install mitmproxy`（或 `python3 -m venv venv && ./venv/bin/pip install mitmproxy`，脚本会自动识别包内 `venv/`）。
-> 从浏览器下载后若提示「无法验证开发者」，右键 →「打开」，或执行 `xattr -dr com.apple.quarantine ZEELoad`。
->
-> 两个包都不含任何第三方 APK，也不联网上传数据；日志只写在本机。
-
-## 适用条件
-
-| 项目 | 要求 |
-|---|---|
-| 车机 | Android 车机，且系统 **仍信任 emSign 根证书**（国内车机大多没有 GMS，未收到封禁列表；2026-10-22 之后更新过信任库的车机可能失效） |
-| 电脑 | macOS 13+（已验证） |
-| 网络 | 电脑给车机开热点/互联网共享，车机连上后能上网 |
-| 权限 | 电脑需要一次管理员权限（配置 pf 转发） |
-| 车机侧 | 无需任何设置、无需装证书、无需开未知来源 |
-
-**只用于你自己的车辆。** 详见[安全与合规](#安全与合规)。
-
-## 环境要求（版本）
-
-| 组件 | 最低要求 | 本项目实测 | 说明 |
+| 类别 | 最低要求 | 实测基线 | 约束说明 |
 |---|---|---|---|
-| Python | **3.12** | 3.12.7 | mitmproxy 12.3+ 的硬性要求；3.10 / 3.11 装不到支持 `--emudhra` 的版本 |
-| mitmproxy | **12.3** | 12.3.1 | `--emudhra` 从 12.3 起提供 |
-| pip | 任意较新版本 | 24.x | `python -m pip install -U pip` |
-| macOS | 13+ | 15.6.1（arm64） | 依赖系统自带的 `pf`、互联网共享 |
+| 车机 | Android 车机（仍信任 `emSign` 根） | 极氪 7X（ZEEKR OS） | 国内车机无 GMS，未同步 2026-10-22 之后的吊销列表；后续 OTA 更新信任库后可能失效 |
+| 宿主机 | macOS 13+ | macOS 15.6.1（arm64） | 依赖系统自带 `pf` 与「互联网共享」；需管理员权限配置透明转发 |
+| Python | 3.12+ | 3.12.7 | `mitmproxy >= 12.3` 的硬性依赖 |
+| mitmproxy | 12.3+ | 12.3.1 | `--emudhra` 参数自 12.3 起提供 |
+| 网络拓扑 | Mac 开 Wi-Fi 热点共享网络 | 手机 USB 共享 → Mac → 车机 | 车机必须直连运行本工具的 Mac 热点，无远端代理模式 |
 
-检查命令：
-
-```bash
-python3 --version
-mitmdump --version            # 需要 Mitmproxy 12.3+
-python3 -m pip show mitmproxy | grep -E "^(Name|Version)"
-```
-
-## 原理
-
-```text
-车机 ──> 电脑热点
-          ├─ 透明转发：车机到 *.zeekrlife.com 的 443 全部转到本机（pf 独立 anchor）
-          ├─ 解密：mitmproxy --emudhra，车机信任这条链，所以能解开 TLS
-          ├─ 注入：商店「检查更新」时，把已安装应用的版本改成更高、哈希/大小指向目标 APK
-          └─ 替换：商店真正下载时，把响应体换成目标 APK（按 Range 正确切分）
-车机商店：哈希校验通过 → 请求签名（服务端对非官方哈希返回 null，商店不拦）→ 安装器按「新应用」装上
-```
-
-四个关键点（都在实测中确认过）：
-
-1. 车机接受 mitmproxy 内置的 eMudhra 链，**不需要往车机装任何证书**；
-2. 商店的哈希校验基准来自 appList 元数据，而元数据走同一条可解密的 TLS，可以一起改写；
-3. 服务端只给官方哈希签名（非官方返回 `sign:null`），但**商店/安装器不因 null 中止**；
-4. 包名不同会被安装器当成**新应用**安装 —— 所以只能装新包，不能覆盖已装应用。
-
-## 两个漏洞的组合
-
-本方法**不是单点突破**，而是把两个独立的安全问题串起来用——缺一不可：
-
-| | 漏洞 | 在本项目里的作用 |
-|---|---|---|
-| **A. CA 证书链不可信** | eMudhra 中间 CA 私钥泄露（2026-10-17 披露），车机系统仍信任该链 | 让网关能够**解密并改写**商店的 HTTPS（元数据、下载内容） |
-| **B. 商店安装授权逻辑不一致** | 直接安装路径要求有效 `sign`；而「更新已安装应用」路径**不校验** `sign`——服务端返回 `sign: null` 仍继续下载并安装 | 让改写后的第三方 APK 以「更新」名义**绕过安装授权** |
-
-```text
-A：解密 + 改写 TLS
-   └─ 把「安装任意 APK」伪装成「某个已安装应用有新版本」
-        └─ B：更新路径不校验 sign
-             └─ 目标 APK 以「更新」名义被安装
-```
-
-单独利用任何一个都不够：
-
-- **只有 A**：能看能改，但任意 APK 拿不到有效签名，卡在授权；
-- **只有 B**：需要能改写商店流量才能把「更新」指向自己的 APK，而 HTTPS 挡住了；
-- **A + B**：才能把「任意 APK」送进安装流程。
-
-实测证据（2026-10-30）：服务端对非官方哈希返回 `sign: null`，商店仍完成下载并安装 DiPlay 0.2.22。完整论证、A/B 对照与厂商修复建议见 [docs/技术路径-车机APK侧载.md §4.5](docs/技术路径-车机APK侧载.md#45-两个漏洞的组合核心结论)。
-
-> 这不是「破解签名」：APK 签名和服务端签名服务本身都没被攻破，被绕过的是校验点。
-
-## 快速开始（macOS）
-
-### 1. 安装 mitmproxy
-
-脚本会自动在以下位置找 `mitmdump`，任选一种即可：
+安装 `mitmproxy`（二选一，脚本自动探测包内 `venv/` 与系统 `PATH`，见 `[scripts/transparent-test.sh#L76-L86]`）：
 
 ```bash
-# 方式 A：系统/Python 环境
-pip3 install mitmproxy
-
-# 方式 B：包内虚拟环境（推荐，不污染系统）
+# 方式 A：项目内虚拟环境（推荐，不污染全局）
 python3 -m venv venv && ./venv/bin/pip install mitmproxy
+
+# 方式 B：全局安装
+pip3 install mitmproxy
 ```
 
-### 2. 开热点、连车机
-
-系统设置 → 通用 → 共享 → **互联网共享**，共享来源选你的上网接口，共享到 Wi-Fi；车机连上这个热点。
-
-### 3. 一键侧载
-
-把要装的 APK **拖到 `一键侧载安装.command` 上**（或双击后输入路径），输入 Mac 密码。
-
-脚本会自动完成：探测共享接口（`bridge*`）→ 从 DHCP 租约识别车机 → 配置 pf 独立 anchor → 启动 mitmdump → 注入 + 替换。
-
-### 4. 车机侧操作
-
-1. 打开应用商店 → **点开任意一个应用的详情页**（详情页会实时请求元数据，这是注入生效的关键入口）；
-2. 看电脑终端出现：
-
-   ```
-   [inject-update] 已为 ALL 注入新版本（N 个下载地址已武装）
-   ```
-
-3. 在详情页点「更新 / 安装」，接着应出现：
-
-   ```
-   [replace-apk] 以 xxx.apk (NNNN 字节) 替换下载，Range=...
-   ```
-
-4. 进度走完即安装完成，按 **Ctrl-C** 结束（会自动卸载 pf 规则）。
-
-装完如果图标没出现，重启车机或等桌面刷新；部分应用需要额外硬件（如 DiPlay 需要 CarPlay 转换盒）。
-
-### 手动 / 高级用法
+安装完成后可执行环境自检：
 
 ```bash
-# 指定 APK 与注入目标（默认 ALL：所有已安装应用都伪装成可更新）
-sudo bash scripts/zeekr-sideload.sh --apk /path/app.apk
+python3 --version && mitmdump --version && bash scripts/check-environment.sh
+```
+
+> **部署要点**：从 [Releases](https://github.com/zhujinle/ZEELoad/releases) 下载的 `ZEELoad-macOS.zip` 不包含 `mitmproxy` 与任何第三方 APK；若遇 Gatekeeper 拦截，执行 `xattr -dr com.apple.quarantine ZEELoad` 解除隔离属性。
+
+---
+
+## 2. 工作原理与组合漏洞
+
+本方案依赖「传输层证书链失信（漏洞 A）」与「应用层更新路径未校验签名（漏洞 B）」的串联组合，单独利用任一缺陷均无法完成安装。
+
+```text
+车机 ──> Mac 互联网共享热点（bridge*）
+          ├─ 透明转发：pf 独立 anchor 将车机 TCP 443 重定向至 127.0.0.1:18080，阻断目标 IPv6 回退 IPv4
+          ├─ 透明解密：mitmdump --mode transparent --emudhra（车机仍信任 emSign 根）
+          ├─ 元数据注入：改写 appList / 详情页响应，抬高版本号并覆写 sha256 / apkMd5 / apkSize
+          └─ 流式替换：拦截 .apk 下载，按 Range 返回目标 APK 切片（256 KB 分块流式发送）
+车机商店：哈希校验通过 → 请求 /app/signature（服务端返回 sign: null，商店不拦截）→ 安装器按新应用安装
+```
+
+| 漏洞环节 | 机制缺陷 | 在侧载链中的作用 | 实现与证据位置 |
+|---|---|---|---|
+| **漏洞 A（传输层）** | eMudhra 中间 CA 私钥泄露（2026-10-17 披露），车机未吊销 `emSign` 根 | 无证书解密并改写 `*.zeekrlife.com` 的 HTTPS 流量 | `[scripts/transparent-test.sh#L450-L466]` |
+| **漏洞 B（应用层）** | 服务端对非官方哈希返回 `sign: null`，但商店「更新」路径未拦截空签名 | 以「更新」名义绕过直接安装路径的签名授权门闩 | [技术路径 §4.5](docs/技术路径-车机APK侧载.md#45-两个漏洞的组合核心结论) |
+| **元数据注入** | 商店以响应体中的哈希作为本地校验基准，且按版本号缓存 | 用目标 APK 的 SHA-256 前 7 位派生 `apkVersion` 破除缓存，同时武装下载路径 | `[addons/zeekr_log.py#L348-L362]`、`[addons/zeekr_log.py#L504-L543]` |
+| **流式替换闸门** | 下载响应在 `responseheaders` 阶段按 `Range` 接管 | 仅在命中已武装路径（30 分钟内）或签名请求匹配替换哈希（15 分钟内）时替换，其余原样透传 | `[addons/zeekr_log.py#L146-L208]`、`[addons/zeekr_log.py#L249-L258]` |
+
+> **关键结论**：本方法未攻破 APK 签名或服务端签名机制，而是绕过了客户端更新路径的校验点；由于目标 APK 与宿主应用包名不同，系统安装器会将其作为**新应用**安装，无法覆盖升级已有应用。
+
+---
+
+## 3. 使用方式（WebUI 与命令行）
+
+项目提供三步向导 WebUI 与一键终端脚本两种入口，底层均调用同一引擎 `[scripts/transparent-test.sh]`，状态与日志完全一致。
+
+| 入口文件 | 命令行等价写法 | 形态 | 适用场景 |
+|---|---|---|---|
+| `zeeload.command` | `./zeeload.command [a.apk b.apk]` | 浏览器 WebUI（默认） | 可视化三步向导、三态浅深调光、拖拽排序队列、实时进度仪表盘 |
+| `一键侧载安装.command` | `sudo bash scripts/zeekr-sideload.sh --apk a.apk ...` | 终端交互脚本 | 直接把一个或多个 APK 拖到图标上即刻执行 |
+| `检查环境.command` | `bash scripts/check-environment.sh` | 只读诊断脚本 | 检查共享接口、车机租约与 `mitmdump` 状态 |
+| `停止并恢复.command` | `sudo bash scripts/stop-transparent.sh` | 兜底清理脚本 | 异常中断后手动卸载 `pf` 规则并停止残留代理 |
+
+> 备用入口 `./zeeload.command --tk` 保留旧版 Tk 窗口（`zeeload/gui.py`），但 Tk 8.5 在 macOS Retina 上存在版式异常，不推荐使用。
+
+### 3.1 WebUI 三步向导
+
+WebUI 由标准库 `ThreadingHTTPServer`（`zeeload/webui.py`）与无外链单文件页面（`zeeload/web/index.html`）组成，支持**自动 / 浅色 / 深色**三态调光（适应白天车内反光环境），仅监听 `127.0.0.1` 随机空闲端口，通过系统文件选择器读取本机路径，不上传文件。
+
+1. **选择 APK**：支持「选择 APK（设为主任务）」与「+ 追加到队列尾」独立操作，也可手动粘贴本地路径；清单支持按 `⠿` 拖拽排序、单条移除与清空，队首始终与当前任务保持同步，且运行期间自动锁定队首防止篡改（`[zeeload/webui.py#L57-L115]`、`[zeeload/webui.py#L462-L545]`）。
+2. **环境与权限**：上半区逐项体检 `mitmdump`（含 `--emudhra`）、共享接口 `bridge*`、车机 DHCP 租约与 `18080` 端口占用（采用分层 TTL 缓存与回环快速探测避免轮询卡顿，见 `[zeeload/webui.py#L139-L185]`）；下半区内联验证管理员权限（密码经 `sudo -S` 校验不落盘，见 `[zeeload/webui.py#L577-L596]`，运行期间后台自动续期时间戳，见 `[zeeload/webui.py#L201-L209]`）。
+3. **开始侧载**：顶部常驻显示当前目标 APK 名称与剩余排队数量（运行中刷新页面会自动定位至本步）；点「开始侧载」后按高亮提示条在车机打开应用商店 → **点开任意已安装应用的详情页** → 待状态变为「已注入更新」后点击「更新」→ 待车机屏幕安装完成后点「停止并卸载规则」（自定义日志路径见 `[zeeload/webui.py#L292-L298]`）。
+
+> **进度解析机制**：`common.py` 先剥离 mitmproxy 自动添加的 `zeekr_log: ` 前缀，再按里程碑归约当前阶段（运行中 → 已注入更新 → 商店已确认 → 替换下载中；若遇缓存透传自动告警并在新注入后解除），避免异步日志乱序导致进度回退（`[zeeload/common.py#L235-L312]`）。
+
+### 3.2 一键脚本与高级参数
+
+将 APK 拖至 `一键侧载安装.command`（支持一次拖入多个），或在终端执行：
+
+```bash
+# 注入所有已安装应用（默认 ALL）
+sudo bash scripts/zeekr-sideload.sh --apk /path/to/app.apk
+
+# 仅针对指定包名注入
 sudo bash scripts/zeekr-sideload.sh --apk app.apk --pkg com.zeekr.media.podcast
 
-# 只看会执行什么，不改系统（无需密码）
+# 只读预检（不加载 pf 规则、不启代理）
 bash scripts/transparent-test.sh --check-only --all-443
-
-# 环境自检
-bash scripts/check-environment.sh
 ```
 
-可用环境变量覆盖自动探测：`ZEEKR_IFACE`、`ZEEKR_CAR_IP`、`ZEEKR_CAR_MAC`、`ZEEKR_VENV`、`ZEEKR_DOMAINS`、`ZEEKR_HOSTS`。
+可用环境变量覆盖自动探测：`ZEEKR_IFACE`、`ZEEKR_CAR_IP`、`ZEEKR_CAR_MAC`、`ZEEKR_VENV`、`ZEEKR_DOMAINS`、`ZEEKR_HOSTS`、`ZEEKR_OUT_BASE`。
 
-## 界面（WebUI 为主）
+> **操作要点**：商店对更新列表存在缓存，必须在车机上**点开应用详情页**触发实时元数据请求，确认日志出现 `[inject-update]` 后再点击更新。
 
-引擎（`scripts/transparent-test.sh`）不变，界面只是它的壳，共用 `zeeload/common.py`
-（引擎调用、输出→状态映射、APK 哈希、接口/租约/端口探测）。
+---
 
-三个入口，都是**双击即用**，也都能带 APK 参数：
+## 4. 连续侧载与引擎生命周期
 
-| 双击 | 命令行 | 打开什么 |
-|---|---|---|
-| `一键侧载安装.command` | `bash scripts/zeekr-sideload.sh --apk …` | 全自动：算哈希 → 开代理 → 注入替换，一问到底 |
-| `zeeload.command` | `./zeeload.command` | WebUI（浏览器里四步向导） |
-| `终端界面.command` | `./zeeload.command --tui` | 终端界面（TUI，不出浏览器） |
-
-```bash
-./zeeload.command a.apk b.apk         # WebUI，带清单
-./zeeload.command --tui a.apk b.apk   # 同 ./终端界面.command a.apk b.apk
-./zeeload.command --tk                # 原生 Tk 窗口（备用，版式不可靠）
-```
-
-- 单文件 HTML（`zeeload/web/index.html`）+ 标准库 `http.server`，**不需要 pip 装任何东西**；
-- 只监听 `127.0.0.1`，不对外；
-- 文件选择走系统的「打开」对话框，路径由后端读——浏览器拿不到路径，也不会传文件；
-- 日志增量拉取（`/api/state?since=N`），跑起来不卡。
-
-### 向导四步
-
-打开页面**永远停在第 1 步**，按顺序往下走；步进条可点击，想回哪步直接点。
-
-| 步 | 做什么 | 不满足时 |
-|---|---|---|
-| **1 导入 APK** | 点「浏览…」选 APK（**本身就是多选**：选几个进几个） | 「下一步」置灰 |
-| **2 检查环境** | 自动列出 mitmdump / 共享接口 / 车机租约 / 端口 18080 四项 | 有阻塞项时「下一步」置灰，并指出该改什么 |
-| **3 获取权限** | 点「输入密码」输一次 Mac 密码 | 未授权时「下一步」置灰 |
-| **4 开始任务** | 仪表盘：当前阶段 + 拦截/注入/替换/已用时 + 五段流程条 | 「开始」置灰，右侧写明还差什么 |
-
-任务清单（第 1 步）是唯一的队列界面：
-
-- 选中的第一个 APK 成为**当前任务**，其余按顺序进清单；
-- 点住条目左侧的 `⠿` **拖动排序**，`×` 移除单条，「清空」一次清完；
-- 同一个 APK 选两次不会重复入队（按绝对路径去重）；
-- 装完一个，点「下一个」自动接清单里的下一个。
-
-### 为什么第 4 步能显示进度
-
-阶段与计数**全部来自引擎原文，不靠猜**：解析器先剥掉 mitmproxy 给插件日志加的 `zeekr_log: `
-前缀，再按里程碑归约成阶段（拦截 → 注入 → 商店确认 → 替换 → 完成），所以插件日志顺序变化
-不会让进度倒退。日志本身收在第 4 步的「高级设置与运行日志」里，平时不用看。
-
-### 为什么需要管理员权限
-
-引擎第 221 行硬性要求 root（改 pf 转发规则、监听 443），没 root 直接退出。
-
-- WebUI 的密码框只喂给本机 `sudo -S`（从 stdin 读一次），不落盘、不进日志、不回显；
-- 默认用完即弃，勾「本次运行内记住」才在内存里留一份（进程退出就没了）；
-- 也可以完全不用这个框：在终端里执行一次 `sudo -v`，WebUI 通过 `sudo -n` 沿用那个时间戳；
-- `一键侧载安装.command` 和 `--tui` 走的是同一条路：由脚本自己在终端里问密码。
-
-> **没有远端模式**。车机必须和运行本程序的这台 Mac 在同一个热点里：手机开 USB 网络共享给 Mac，
-> 再由 Mac 的「互联网共享」把网络分享成 Wi-Fi 给车机（和 `一键侧载安装.command` 的要求完全一样）。
-> 第 2 步会实时显示共享接口与识别到的车机 IP，没开共享直接标红。
-
-### 终端界面（TUI）
-
-两种打开方式，效果完全一样：
-
-```bash
-双击「终端界面.command」                  # 自己开一个终端窗口，然后把 APK 拖进去
-./zeeload.command --tui                  # 已经在终端里时用这个
-./zeeload.command --tui a.apk b.apk      # 文件参数直接进队列
-```
-
-零第三方依赖，只用标准库 `curses`，SSH 里也能用；**必须在真实终端里跑**（没有 TTY 会提示退出，
-双击那条路会先让「终端」开窗口，再在新窗口里启动）：
-
-| 按键 | 动作 |
-|---|---|
-| `s` / 回车 | 开始本轮 |
-| `x` | 停止本轮（引擎收到 SIGTERM，自己卸 pf 规则） |
-| `o` | 换一个 APK |
-| `n` | 装队列里的下一个 |
-| `c` | 清屏（日志文件照写） |
-| `↑` `↓` | 翻日志 |
-| `q` | 退出 |
-
-### 退出码怎么读
-
-| 退出码 | 含义 | 界面的反应 |
-|---|---|---|
-| 0 | 本轮正常结束 | 有队列时提示接下一个 |
-| 130 | Ctrl-C 中断 | 同 0，属于正常收尾 |
-| 10 | 没有共享接口 / 车机没连上 | 提示检查互联网共享，修好可原地重试 |
-| 11 | 端口 18080 被占用 | 提示先「停止」或跑『停止并恢复』 |
-| 12 | 找不到 mitmdump | 提示 `pip3 install mitmproxy` |
-| 13 | mitmproxy < 12.3（缺 `--emudhra`） | 提示 `pip3 install -U mitmproxy` |
-
-界面不会因为环境类错误中断会话：退出码写进状态，修好点「开始」原地重试。
-
-### 关于原生窗口（--tk）
-
-仓库里保留了 Tk 版本（`zeeload/gui.py`），但**不推荐**：Tk 8.5 在 Retina 上把 1px 边框算成 0 像素、
-`pack` 在 `expand=True` 时把卡片压成 0 高，实测版式错乱（只剩一排按钮）。只在 `--tk` 时启用。
-
-## 连续侧载多个 APK
-
-v1.1.0 起，一次会话里可以连续装多个 APK，不用重开脚本、不用重新输管理员密码（macOS 的 sudo 通常缓存 5 分钟）。
-
-### 一次拖多个（批量）
-
-把多个 APK 一起拖到 `一键侧载安装.command` 上，或在命令行一次性给出：
-
-```bash
-sudo bash scripts/zeekr-sideload.sh --apk a.apk b.apk c.apk
-```
-
-脚本按给出的顺序逐个跑：每个 APK 都是一轮完整的「加载 pf → 启动 mitmdump → 注入 + 替换 → 卸载规则」。
-每一轮终端都会重新打印该 APK 的大小、sha256、md5，并等你在车机上点更新；**Ctrl-C 只结束当前这一轮**，不影响后面的排队。
-
-### 一轮结束后换下一个
-
-每轮结束（Ctrl-C 或出错）都会回到提示：
+批量安装采用「一轮一进程」架构，每轮独立完成 pf 加载、代理启动与退出清理，避免跨轮状态污染。
 
 ```text
-回车直接继续下一个；输入 APK 路径（可空格隔开多个，可带引号）继续；
-输入 n 回车结束。
-下一个:
+WebUI 队列 / zeekr-sideload.sh 循环
+  └─ 单轮调用 transparent-test.sh（自洽单元）
+       ├─ 加载独立 pf anchor（com.apple/zeekr-capture）+ 阻断目标 IPv6
+       ├─ 启动 mitmdump（带 PYTHONDONTWRITEBYTECODE=1，独立输出 logs/<时间戳>/）
+       └─ 退出 trap（EXIT / INT / TERM / HUP）：记录 pf 计数器 → 卸载 anchor → 停止 mitmdump → 归还目录属主
 ```
 
-- 直接把下一个 APK 从 Finder 拖进终端窗口（会自动带上路径）；
-- 或手工输入路径，多个路径用空格分隔；
-- 直接回车 = 按队列继续（没有队列就直接退出）；
-- 输入 `n` = 退出脚本。
+- **干净隔离**：每轮新建 `mitmdump` 进程，`_armed_paths` 与 `_override_seen_at` 随进程销毁；卸载与重载之间存在约 3–5 秒切网空窗，须待上一个 APK 在车机安装完成后再开始下一轮（`[scripts/transparent-test.sh#L163-L218]`）。
+- **队列推进**：WebUI 在单轮正常结束（退出码 `0` / `130`）后自动将已完成 APK 移出清单并切换至队首下一条（`[zeeload/webui.py#L247-L260]`）；命令行脚本按 `Ctrl-C` 仅结束当前轮并回到「下一个」提示，回车继续队列、拖入路径可追加、`n` 退出（`[scripts/zeekr-sideload.sh#L170-L204]`）。
+- **可靠停止**：WebUI 点击「停止」时，若普通用户向 `sudo` 子进程发信号遇到 `PermissionError`，自动回退至 `sudo kill -TERM` 优雅退出；超时未退则强杀子进程树并调用 `stop-transparent.sh` 兜底清空 `pf` anchor（`[zeeload/common.py#L374-L401]`、`[zeeload/webui.py#L282-L290]`）。
 
-输入不是 APK（或不是 zip）时只给警告，不会中断整个会话。
+> **设计结论**：不修改 `/etc/pf.conf` 且每轮重置 anchor，使系统网络状态在正常退出或异常兜底后均可完整恢复。
 
-### 注意事项
+---
 
-- 每轮都会卸载并重新加载 pf anchor、重启 mitmdump，**空窗约 3–5 秒**，期间车机断网；等车机确认上一个装好了再继续。
-- 每轮的日志都单独落在 `logs/<时间戳>/` 下，装了 5 个就是 5 个目录，不要被目录数量误导。
-- 装的是**新包**：下一个 APK 的包名必须和车机上已装应用不同，否则安装器会报「包名冲突」。
+## 5. 已知限制与安全合规
 
-## 结果判读
+本工具仅适用于自有车辆的技术研究与自用场景，且受限于车机系统策略与当前漏洞窗口期。
 
-| 终端 / 车机现象 | 含义 | 处理 |
+### 5.1 已知技术限制
+
+- **仅可安装新包**：无法覆盖或升级车机已有同包名应用（系统安装器校验包名与签名一致性）。
+- **仅转发 IPv4**：通过 `block return quick` 阻断目标域名 IPv6 流量以迫使客户端回退 IPv4（`[scripts/transparent-test.sh#L380-L387]`）。
+- **全量解密影响范围**：默认开启 `--intercept-all` 时，做了证书固定的个别车机应用可能暂时异常，停止工具后恢复。
+- **时效性边界**：车机 OTA 更新根信任库或应用商店修复 `sign: null` 校验后，本路径将失效。
+
+### 5.2 安全与合规声明
+
+- **严禁商业用途**：禁止用于收费代装、付费服务、硬件捆绑销售、付费培训或任何形式的变现。
+- **权属与质保责任**：仅限用于本人名下车辆；安装非官方应用可能影响整车或车机质保，相关法律与财产风险由使用者自行承担。
+- **数据本地化**：工具不收集、不上传任何数据，运行日志仅保存在本机输出目录；仓库与发布包不含任何第三方 APK。
+
+> **合规要点**：退出工具或执行 `停止并恢复.command` 即可恢复车机直连网络，车机侧不残留任何证书或系统分区改动。
+
+---
+
+## 6. 排障指引
+
+### 6.1 运行异常排查表
+
+| 症状 / 现象 | 机制诱因 | 排查与处置步骤 |
 |---|---|---|
-| `[inject-update] ... 已武装` | 元数据注入成功 | 可以去点更新了 |
-| 没有 `[inject-update]` | 商店用了缓存，没重新拉元数据 | **点开应用详情页**；仍不行就重启车机 |
-| `[replace-apk] 以 xxx.apk 替换下载` | 替换成功 | 等安装完成 |
-| `[replace-apk] 该下载...按原样透传` | 注入没生效，下载的是官方内容 | 同上，先让注入成功 |
-| 商店报「下载失败」 | 内容哈希与元数据对不上（替换没发生） | 检查上面的日志与机型 |
-| 安装报「包名冲突」 | 目标 APK 与已安装应用同名 | 换包名不同的 APK |
-| 装上了但桌面没图标 | 车机桌面过滤了非白名单应用 | 重启车机；从「设置 → 应用」里直接打开 |
+| 终端未出现 `[inject-update]` | 应用商店复用本地列表缓存，未发起新的元数据请求 | 在车机商店**点开任意应用的详情页**触发实时请求；若仍无日志，在「设置 → 应用 → 应用商店」强行停止或重启车机后重试 |
+| 出现 `[replace-apk] 该下载…按原样透传` | 下载发生前未命中已武装路径或替换哈希签名请求，触发防误替换闸门（`[addons/zeekr_log.py#L154-L163]`） | 先按上一条触发 `[inject-update]`，确认元数据注入成功后再点击更新 |
+| 商店提示「下载失败」 | 实际下载内容哈希与元数据不一致（替换未生效或中途断网） | 查看当轮 `logs/<时间戳>/mitm.log` 是否出现 `[replace-apk] 以 xxx.apk 替换下载`；确认车机未切换 Wi-Fi |
+| 安装报「包名冲突 / 签名不一致」 | 目标 APK 包名与车机已安装应用相同但签名不同 | 更换不同包名的 APK，无法覆盖官方内置应用 |
+| 安装完成但桌面无图标 | 车机桌面启动器过滤非白名单应用 | 重启车机，或从车机「设置 → 应用」中直接启动 |
+| 退出后车机无法上网 | 异常中断导致 `pf` anchor 未卸载或 `mitmdump` 残留 | 执行 `停止并恢复.command`（或 `sudo bash scripts/stop-transparent.sh`），核对 `pfctl -a com.apple/zeekr-capture -s rules` 为空 |
 
-## 常见问题
+### 6.2 引擎结构化退出码
 
-**Q：会不会把车机弄坏？**
-不会。全程只改电脑上的转发规则和发给车机的响应内容，不写车机系统、不装证书、不改分区。退出脚本即恢复；车机断网就关掉脚本或跑 `停止并恢复.command`。
+引擎在环境预检阶段返回固定退出码，供 WebUI 与脚本精准翻译提示并允许原地重试（`[scripts/transparent-test.sh#L228-L295]`、`[zeeload/common.py#L31-L45]`）：
 
-**Q：能覆盖/升级已安装的应用吗？**
-不能。安装器要求更新包与原应用包名、签名一致；本方法装的是**新包**。
+| 退出码 | 含义 | 处置方式 |
+|---|---|---|
+| `0` / `130` | 本轮正常结束 / `Ctrl-C` 正常中断 | 无异常；存在后续队列时可继续下一轮 |
+| `10` | 未检测到活跃 `bridge*` 共享接口或车机未连接 | 开启「系统设置 → 通用 → 共享 → 互联网共享」并让车机重连热点 |
+| `11` | 代理端口 `18080` 被占用 | 点击「停止」或运行 `停止并恢复.command` 清理残留进程 |
+| `12` | 未找到可执行 `mitmdump` | 在项目内建 `venv/` 安装 `mitmproxy`，或通过 `ZEEKR_VENV` 指定路径 |
+| `13` | `mitmproxy` 版本低于 12.3（缺少 `--emudhra`） | 执行 `pip3 install -U mitmproxy` 升级至 12.3+ |
 
-**Q：为什么一定要点「应用详情页」？**
-商店对列表/更新结果做了缓存，改缓存里的哈希不会生效；详情页是少数会实时请求元数据的入口。日志里出现 `[inject-update]` 就说明注入到位。
+---
 
-**Q：为什么服务端返回 `sign:null` 也能装？**
-实测商店与安装器都不校验这个签名（或只作透传）。这是本方法成立的关键前提之一，商店/车机 OTA 更新后可能改变。
+## 附录
 
-**Q：macOS 提示找不到 mitmdump？**
-按[快速开始](#快速开始macos)装好；或在包内建 `venv/`，脚本会自动用它。
-
-**Q：装完一个想接着装第二个，要重新开脚本吗？**
-不用。脚本会在每轮结束时提示输入下一个 APK（也可以直接回车按队列继续），详见[连续侧载多个 APK](#连续侧载多个-apk)。
-
-**Q：Ctrl-C 会不会把整个批量任务停掉？**
-不会。Ctrl-C 只结束当前这一轮（卸载 pf、停 mitmdump），随后回到「下一个」提示，队列里剩下的还在。
-
-**Q：Windows 版还能用吗？**
-不能，v1.1.0 起已移除。需要 Windows 版请回到 v1.0.1 标签下的 `windows/` 目录（`git checkout v1.0.1 -- windows`），但该版本不再维护。
-
-## 让 AI 帮你配置
-
-把项目地址 **https://github.com/zhujinle/ZEELoad** 直接交给 AI，让它自己完成环境配置并把工具跑起来。
-
-## 已知限制
-
-- **只能装新包**，不能替换已安装应用；
-- **仅 IPv4 透明转发**（CDN 有 AAAA，脚本会用 `block return` 把目标域名的 IPv6 挡掉、逼回 IPv4）；
-- 全量解密（`--intercept-all`）可能让个别做了证书固定的车机应用暂时异常，退出脚本即恢复；
-- 商店「检查更新」有缓存，必须靠**详情页**触发新元数据；
-- 车机 OTA / 商店更新后，信任库或校验逻辑可能变化，需要重新验证；
-
-## 安全与合规
-
-> **本项目仅限自有车辆的研究与自用，严禁用于任何商业用途**：不得收费代装、不得作为付费服务、不得随产品捆绑、不得用于付费培训或咨询，以及任何形式的变现。
-
-- 仅用于**你名下的车辆**；请勿用于他人车辆，或用于规避付费与授权；
-- **质保风险自行辨别、自行承担**：向车机安装非官方应用可能被厂商 / 4S 店认定为影响质保，进而拒绝保修或拒赔；是否操作、能否接受，请自行判断，相关后果由使用者自行承担；
-- 安装的 APK 由使用者自行负责来源与合法性；仓库与发布包均不附带任何第三方 APK；
-- 工具不收集、不上传任何数据，所有日志只落在本机 `logs/`；
-- 使用前请确认当地法律法规与车辆保修条款；因使用本项目产生的一切法律与财产风险由使用者自行承担；
-- 本项目仅做技术探讨，代码未经第三方安全审计，不提供任何形式的担保，**不得用于盈利用途**。
-
-## 文件结构
+### A. 文件结构
 
 ```text
-zeeload/
-├── README.md                    本文档
-├── 一键侧载安装.command          ★ 主入口（拖入 APK）
-├── zeeload.command               ★ 界面入口（默认 WebUI；--tui / --tk 可切换）
-├── 终端界面.command              终端界面（TUI）的可双击入口
-├── zeeload/                      界面层（全部标准库，无第三方依赖）
-│   ├── common.py                 引擎调用、状态解析、APK 哈希、环境探测
-│   ├── webui.py                  WebUI 后端（http.server + JSON 接口）
-│   ├── web/index.html            WebUI 前端（单文件，无外链）
-│   ├── tui.py                    终端界面（curses）
-│   └── gui.py                    原生 Tk 窗口（备用，版式不保证）
-├── 停止并恢复.command            兜底：卸载规则、停代理
-├── 检查环境.command              只读诊断
+ZEEload/
+├── README.md                    项目说明（本文档）
+├── zeeload.command              ★ WebUI 入口（默认浏览器三步向导；--tk 备用）
+├── 一键侧载安装.command          ★ 命令行拖拽入口（支持一次拖入多个 APK）
+├── 停止并恢复.command            兜底清理：卸载 pf anchor、停止代理
+├── 检查环境.command              只读环境诊断
+├── zeeload/                     界面层（纯 Python 标准库）
+│   ├── common.py                引擎调用、状态机解析、APK 哈希、环境探测
+│   ├── webui.py                 WebUI 后端（ThreadingHTTPServer + JSON API）
+│   ├── web/index.html           WebUI 前端（单文件，无外链）
+│   └── gui.py                   旧版 Tk 窗口（降级备用）
 ├── scripts/
-│   ├── zeekr-sideload.sh         侧载入口（算哈希、调引擎，支持多轮排队）
-│   ├── transparent-test.sh       引擎：pf 转发 + mitmdump 生命周期（自动探测接口/车机）
-│   ├── stop-transparent.sh       卸载规则
-│   ├── check-environment.sh      环境自检
-│   └── inspect-pf.sh             只读导出 pf 规则（排障用）
-├── addons/zeekr_log.py           mitmproxy 插件（注入 / 替换 / 记录）
-├── assets/                       Logo 与宣传图（svg / png / icns / ico）
-├── docs/
-│   └── 技术路径-车机APK侧载.md    原理、漏洞分析、证据、接口字段
-├── release/                      本地存放待上传的发布包（zip，不入库）
-├── lab/                          本机实验脚本（未纳入版本库）
-├── artifacts/                    本机下载的 APK（未纳入版本库）
-├── evidence/                     实测证据（未纳入版本库）
-└── logs/                         每次运行的输出（未纳入版本库）
+│   ├── zeekr-sideload.sh        CLI 多轮循环入口
+│   ├── transparent-test.sh      核心引擎：pf 透明转发 + mitmdump 生命周期
+│   ├── stop-transparent.sh      卸载 pf 规则与停止代理
+│   ├── check-environment.sh     只读环境自检
+│   └── inspect-pf.sh            只读导出 pf 规则（排障用）
+├── addons/zeekr_log.py          mitmproxy 插件（注入 / 流式替换 / 脱敏记录）
+├── docs/技术路径-车机APK侧载.md  原理、双漏洞论证、实测证据与接口字段
+├── assets/                      Logo 与宣传图（svg / png / icns / ico）
+└── logs/                        每次运行的输出目录（不入库）
 ```
 
-## 版本
+### B. 版本演进与修订记录
 
-### v1.2.0（2026-11-25）
+#### 近期修订留痕（v1.2.0 纠偏与精简）
 
-- **WebUI 改为四步向导**：导入 APK → 检查环境 → 获取权限 → 开始任务；打开页面固定停在第 1 步，
-  前置条件没满足时「下一步」置灰，不再把人直接扔到后面的步骤
-- **第 2 步逐项体检**：mitmdump（含 `--emudhra`）、共享接口、车机租约、端口 18080 四项各给结论与改法，
-  有阻塞项就走不下去
-- **第 3 步网页内授权 sudo**：密码只经 `sudo -S` 从 stdin 递一次，不落盘不进日志；也支持终端 `sudo -v` 后自动放行
-- **第 4 步仪表盘**：当前阶段（大字）+ 拦截/注入/替换/已用时 + 五段流程条；日志折叠进「高级设置与运行日志」
-- **任务清单取代文本框**：浏览即多选、选几个进几个；清单可拖动排序、单条移除、一键清空，按绝对路径去重
-- **修状态不推进**：插件的日志被 mitmproxy 冠了 `zeekr_log: ` 前缀，旧解析器 `startswith` 全部落空，
-  进度被永久钉在「运行中」。现在先剥前缀，再按里程碑归约成阶段，顺序变化也不会倒退
-- **修 E13 误报**：`set -o pipefail` 让 `mitmdump --help | grep -q` 恒为假，装了 12.3.1 也报「低于 12.3」。
-  改为先取输出再判断内容（`scripts/transparent-test.sh`、`一键侧载安装.command` 两处）
-- **TUI 补入口**：`--tui a.apk` 的参数不再被静默丢弃；不存在的路径直接报错退出，没有 TTY 时给出明确提示
-- 修 `ApkInfo(path="").ok` 误判为可用（导致没选 APK 也能点开始）
-- 新增 `终端界面.command`：TUI 的双击入口（无 TTY 时自己开终端窗口），与 `./zeeload.command --tui` 等价
+| 旧版行为 | 新版行为 | 依据与文件行号 |
+|---|---|---|
+| `/api/state` 每 0.9 秒同步拉起 `mitmdump --version/--help` 与 `lsof`（单次约 1.5 秒），前端无锁并发轮询导致 CPU 飙高且重复追加日志 | 后端对 `mitmdump` 静态缓存、网络探测做 2.5s TTL 缓存并用 `connect_ex` 快速探活（轮询降至 `<1 ms`）；前端改用串行 `setTimeout` 与 `log_base` 幂等对齐 | `[zeeload/webui.py#L139-L185]`、`[zeeload/common.py#L190-L208]`、`[zeeload/web/index.html#L527-L635]` |
+| 运行期间 `18080` 被本会话占用误判为环境冲突；`passthrough` 一旦触发永久锁死阶段且遮蔽 `sign_seen` | 运行期识别 `port_self` 不标红阻塞；新注入/签名/替换自动解除 `passthrough`，调整 `_phase_of` 优先级并在前端补齐透传告警 | `[zeeload/webui.py#L168-L183]`、`[zeeload/common.py#L264-L312]`、`[zeeload/web/index.html#L392-L406]` |
+| WebUI 点击「停止」向 `sudo` 子进程发信号触发 `PermissionError`；不勾选记住密码时超 5 分钟 `sudo` 过期失效 | 运行期间后台每 45s 自动续期 `sudo -n -v`；停止回退 `sudo kill -TERM`，强杀兜底清理子进程并执行 `stop-transparent.sh` | `[zeeload/common.py#L374-L401]`、`[zeeload/webui.py#L201-L209]`、`[zeeload/webui.py#L282-L290]` |
+| WebUI 选文件后首项重复入队、运行中可误改当前包，且本地 HTTP 接口缺少鉴权与 DOM 转义 | 统一队首同步并在运行期锁定队首；注入随机 `X-ZEEload-Token` 与 `Host`/`Origin` 校验防御 CSRF/DNS Rebinding，动态文本全量 HTML 转义 | `[zeeload/webui.py#L57-L115]`、`[zeeload/webui.py#L321-L337]`、`[zeeload/web/index.html#L377-L380]` |
+| 高级设置 `outdir` 未透传给引擎；仓库同时维护 WebUI、curses TUI 与备用 Tk | 引擎新增 `--out-dir` 与 `PYTHONDONTWRITEBYTECODE=1`；移除 TUI（`tui.py`、`终端界面.command`、`style.tcss`），收敛为 WebUI + 一键脚本双入口 | `[scripts/transparent-test.sh#L66-L68]`、`[zeeload.command#L27-L48]` |
 
-### v1.1.0 附带的界面（2026-11-25）
+#### 历史版本摘要
 
-- **WebUI**：`zeeload/webui.py`（标准库 http.server）+ `zeeload/web/index.html`（单文件、无外链、无 CDN）
-- **终端界面**：纯标准库 curses，按键 `s/x/o/n/c/q`，SSH 里也能用
-- 两者共用 `zeeload/common.py`：引擎调用、输出→状态映射、APK 哈希、接口/租约/端口探测
-- 原生 Tk 窗口（`zeeload/gui.py`）保留但降级为备用：Tk 在 macOS 上版式不可控，实测错乱
+- **v1.2.0（2026-11-25）**：WebUI 重构为四步向导（导入 APK → 检查环境 → 获取权限 → 开始任务）；修复 `zeekr_log: ` 日志前缀导致状态不推进与 `pipefail` 导致 `E13` 误报；后精简移除 TUI 分支并修复上述 WebUI 队列/停止/输出目录缺陷。
+- **v1.1.0（2026-11-25）**：新增多轮连续侧载与引擎结构化退出码（`10/11/12/13`）；移除 Windows 实现（`windows/` 目录约 2,900 行，历史版本见 `v1.0.1` 标签）。
+- **v1.0.1（2026-10-31）**：补全 Windows ICS 透明劫持与图形界面（已于 v1.1.0 移除）。
+- **v1.0.0（2026-10-30）**：首个版本发布，在极氪 7X 验证 `pf` 透明转发 + `mitmproxy --emudhra` + 更新注入 + 流式替换全链路。
 
-### v1.1.0（2026-11-25）
+### C. 参考资料
 
-- **连续侧载多个 APK**：`一键侧载安装.command` 支持一次拖入多个 APK；每轮结束回车/输入路径即可换下一个，`n` 退出
-- `scripts/zeekr-sideload.sh` 从「跑一次」改为循环：批量参数、路径解析（去引号/转义、相对路径兜底）、逐轮算哈希与校验 zip
-- **移除 Windows 实现**：`windows/` 目录（WinDivert + SNI 分流 + PyInstaller 图形界面，约 2 900 行）整体删除，`ZEELoad-Windows-x64.zip` 不再发布
-  - 历史代码仍可从 v1.0.1 标签取回：`git checkout v1.0.1 -- windows`
-  - 仅在 macOS 上维护；注入/替换插件 `addons/zeekr_log.py` 未改动
-
-### v1.0.1（2026-10-31）· Windows 版已于 v1.1.0 移除
-
-Windows 版从 beta 转为可用，并补上图形界面：
-
-- **Windows 图形界面**：双击 `ZEELoad.exe` 即用（黑金配色，与 logo 同一套视觉），选 APK → 点「开始」；带参数时仍走原来的命令行
-- **修通 ICS 透明劫持**：车机流量经 ICS 转发，只在 WinDivert 的 `NETWORK_FORWARD` 层可见；注入时修正 `WINDIVERT_ADDRESS` 的地址层与热点网卡接口索引
-- **修证书链**：mitmdump 增加 `emudhra`（车机只信任 eMudhra 链），否则 TLS 握手被车机拒绝
-- **修握手超时**：分流器等 mitmproxy CONNECT 响应原来只有 10 秒超时，改为 45 秒并让 mitmproxy 用 `connection_strategy=lazy`
-- **QUIC 处理**：默认丢弃 `UDP 443`，逼商店回退到可解密的 TCP
-- 新增 `--hotspot-ip` / `--sniff` / `--allow-quic` / `--emudhra-old`，以及「放行防火墙」「抓包诊断」「诊断」按钮、运行日志落盘
-- 发布包：`ZEELoad-Windows-x64.zip`（解压即用，不需要 Python）
-
-### v1.0.0（2026-10-30）
-
-首个版本，项目命名 **极载 · ZEEload**。
-
-- **macOS**：一键侧载（拖入 APK），pf 透明转发 + mitmproxy `--emudhra` 解密
-- **Windows（beta，v1.1.0 已移除）**：WinDivert 重定向 + 本地 SNI 分流，共用同一套注入/替换逻辑
-  - 启动脚本自动提权、纯 ASCII 输出；自动定位 `mitmdump.exe`（`Scripts\` / `%APPDATA%` / PATH / 内联）
-  - 要求并自动切换到 Python 3.12+，启动时校验 mitmproxy ≥ 12.3
-  - WinDivert 按方向过滤（只改写 INBOUND 车机包与分流器 OUTBOUND 回程包）
-  - `windows/selftest.py` 自检：函数完整性、SNI 解析、mitmproxy 版本
-- 自动探测：共享接口（`bridge*`）、车机（DHCP 租约）、mitmdump 位置
-- 更新注入支持 appList 与 app/detail 详情页两种响应
-- 大响应流式转发、IPv6 回退、签名→下载时间闸门
-- 独立 pf anchor、只作用于热点侧、退出自动卸载
-- 黑金 Logo（svg / png / icns / ico）与宣传图
-- 发布前已清除车辆识别信息（VIN/MAC/设备号/用户 ID/本机路径）
-
-## 参考
-
-- [mitmproxy 透明代理](https://docs.mitmproxy.org/stable/howto/transparent/)
-- [mitmproxy 证书机制](https://docs.mitmproxy.org/stable/concepts/certificates/)
-- [eMudhra 事件与受影响客户端](https://emudhra.we-have-a-problem.com/)
+- [mitmproxy Transparent Proxying](https://docs.mitmproxy.org/stable/howto/transparent/)
+- [mitmproxy Certificates](https://docs.mitmproxy.org/stable/concepts/certificates/)
+- [eMudhra Incident Overview](https://emudhra.we-have-a-problem.com/)
