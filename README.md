@@ -196,10 +196,17 @@ bash scripts/check-environment.sh
 引擎（`scripts/transparent-test.sh`）不变，界面只是它的壳，共用 `zeeload/common.py`
 （引擎调用、输出→状态映射、APK 哈希、接口/租约/端口探测）。
 
+三个入口，都是**双击即用**，也都能带 APK 参数：
+
+| 双击 | 命令行 | 打开什么 |
+|---|---|---|
+| `一键侧载安装.command` | `bash scripts/zeekr-sideload.sh --apk …` | 全自动：算哈希 → 开代理 → 注入替换，一问到底 |
+| `zeeload.command` | `./zeeload.command` | WebUI（浏览器里四步向导） |
+| `终端界面.command` | `./zeeload.command --tui` | 终端界面（TUI，不出浏览器） |
+
 ```bash
-./zeeload.command                     # 默认 WebUI：在 127.0.0.1 开端口并自动开浏览器
-./zeeload.command a.apk b.apk         # 带上清单
-./zeeload.command --tui               # 终端界面
+./zeeload.command a.apk b.apk         # WebUI，带清单
+./zeeload.command --tui a.apk b.apk   # 同 ./终端界面.command a.apk b.apk
 ./zeeload.command --tk                # 原生 Tk 窗口（备用，版式不可靠）
 ```
 
@@ -247,12 +254,16 @@ bash scripts/check-environment.sh
 
 ### 终端界面（TUI）
 
+两种打开方式，效果完全一样：
+
 ```bash
-./zeeload.command --tui
-./zeeload.command --tui a.apk b.apk     # 文件参数直接进队列
+双击「终端界面.command」                  # 自己开一个终端窗口，然后把 APK 拖进去
+./zeeload.command --tui                  # 已经在终端里时用这个
+./zeeload.command --tui a.apk b.apk      # 文件参数直接进队列
 ```
 
-零第三方依赖，只用标准库 `curses`，SSH 里也能用；**必须在真实终端里跑**（没有 TTY 会提示退出）：
+零第三方依赖，只用标准库 `curses`，SSH 里也能用；**必须在真实终端里跑**（没有 TTY 会提示退出，
+双击那条路会先让「终端」开窗口，再在新窗口里启动）：
 
 | 按键 | 动作 |
 |---|---|
@@ -388,6 +399,7 @@ zeeload/
 ├── README.md                    本文档
 ├── 一键侧载安装.command          ★ 主入口（拖入 APK）
 ├── zeeload.command               ★ 界面入口（默认 WebUI；--tui / --tk 可切换）
+├── 终端界面.command              终端界面（TUI）的可双击入口
 ├── zeeload/                      界面层（全部标准库，无第三方依赖）
 │   ├── common.py                 引擎调用、状态解析、APK 哈希、环境探测
 │   ├── webui.py                  WebUI 后端（http.server + JSON 接口）
@@ -430,6 +442,7 @@ zeeload/
   改为先取输出再判断内容（`scripts/transparent-test.sh`、`一键侧载安装.command` 两处）
 - **TUI 补入口**：`--tui a.apk` 的参数不再被静默丢弃；不存在的路径直接报错退出，没有 TTY 时给出明确提示
 - 修 `ApkInfo(path="").ok` 误判为可用（导致没选 APK 也能点开始）
+- 新增 `终端界面.command`：TUI 的双击入口（无 TTY 时自己开终端窗口），与 `./zeeload.command --tui` 等价
 
 ### v1.1.0 附带的界面（2026-11-25）
 
